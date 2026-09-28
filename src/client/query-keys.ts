@@ -5,6 +5,7 @@ export const qk = {
   entries: (gid: string) => ['entries', gid] as const,
   entry: (gid: string, eid: string) => ['entry', gid, eid] as const,
   revisions: (gid: string, eid: string) => ['revisions', gid, eid] as const,
+  comments: (gid: string, eid: string) => ['comments', gid, eid] as const,
   activity: (gid: string) => ['activity', gid] as const,
   defaults: (gid: string) => ['defaults', gid] as const,
 };

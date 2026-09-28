@@ -14,6 +14,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { categoryLabel } from '@/lib/categories';
+import type { CommentDto } from '@/lib/contracts/comments';
 import type { EntryDto, RevisionDto } from '@/lib/contracts/entries';
 import type { GroupDetail } from '@/lib/contracts/groups';
 import { cn } from '@/lib/cn';
@@ -24,6 +25,7 @@ import { dayLabel } from '@/features/group/dates';
 import { relativeTime } from '@/features/group/relative-time';
 import { useEntryWrite } from '@/features/group/entry-writes';
 import { nameMap } from '@/features/group/use-group-data';
+import { Comments } from './comments';
 import { buildHistory } from './history';
 
 const METHOD: Record<string, string> = {
@@ -37,10 +39,12 @@ export function EntryDetail({
   group,
   initialEntry,
   initialRevisions,
+  initialComments,
 }: {
   group: GroupDetail;
   initialEntry: EntryDto;
   initialRevisions: RevisionDto[];
+  initialComments: CommentDto[];
 }) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -216,6 +220,8 @@ export function EntryDetail({
             {error instanceof ApiError ? error.message : 'Something went wrong. Try again.'}
           </ErrorText>
         ) : null}
+
+        <Comments group={group} entryId={eid} initial={initialComments} />
 
         <section aria-labelledby="history-heading" className="grid gap-2">
           <h3

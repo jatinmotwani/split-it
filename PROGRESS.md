@@ -147,7 +147,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: unit tests for the keyword table; e2e: typing "Uber to airport" pre-selects Transport.
 - [x] **1.29** Adjustment split in the split editor (± per person, then equal).
   - Accept: component test: the remainder and a negative-share error show correctly.
-- [ ] **1.30** Comments: API (member-only, length limits, soft delete) + UI on the entry detail page; an activity row.
+- [x] **1.30** Comments: API (member-only, length limits, soft delete) + UI on the entry detail page; an activity row.
   - Accept: the authz sweep covers comments; e2e: post and see a comment.
 - [ ] **1.31** Activity feed screen in the group (paged, human sentences, links to entries).
   - Accept: e2e: an edit shows "Asha changed Dinner: ₹1,200 → ₹1,500".
