@@ -133,8 +133,9 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 - [x] **1.26** Global "+" remembers the last group; Home totals update after writes; optimistic updates everywhere through `sendMutation()`.
   - Accept: e2e: from Home, "+" opens the last group's add form; a new expense shows at once, before the server responds.
   - Status: Expense add/edit and delete/undo are optimistic (pending rows show “Saving…”). Recording a payment waits for the server on purpose, so a suggestion can't be recorded twice. Pages rendered while a write was in flight refetch once.
-- [ ] **1.27** Phase 1a exit: an e2e with 3 users (1 guest), 20 expenses mixing split types, payers and a second currency, balances checked against `lib/money` as the oracle, then settle all. Deploy to production.
+- [~] **1.27** Phase 1a exit: an e2e with 3 users (1 guest), 20 expenses mixing split types, payers and a second currency, balances checked against `lib/money` as the oracle, then settle all. Deploy to production.
   - Accept: CI is green; you use it on a real outing and note the rough edges in this file.
+  - Status: The e2e passes locally in about 45 s: accounts for Asha and Ravi, Neel as a guest, 20 expenses (equal, exact, %, shares, several payers, a payer outside the split, keypad maths, USD). It checks every stored share, each balance, the settle plan and every phone against lib/money, then settles to zero. Still open: deploying to production (needs your Vercel and Neon accounts, task 0.14) and using it on a real outing.
 
 ---
 
