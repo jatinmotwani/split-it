@@ -24,6 +24,7 @@ import { CategoryIcon } from '@/features/expense/category-icon';
 import { dayLabel } from '@/features/group/dates';
 import { relativeTime } from '@/features/group/relative-time';
 import { useEntryWrite } from '@/features/group/entry-writes';
+import { groupTitle } from '@/features/groups/title';
 import { nameMap } from '@/features/group/use-group-data';
 import { Comments } from './comments';
 import { buildHistory } from './history';
@@ -124,7 +125,7 @@ export function EntryDetail({
   return (
     <AppShell
       title={isSettlement ? 'Payment' : 'Expense'}
-      back={{ href: `/g/${gid}`, label: `Back to ${group.name}` }}
+      back={{ href: `/g/${gid}`, label: `Back to ${groupTitle(group)}` }}
     >
       <div className="grid gap-5">
         {entry.deletedAt ? (

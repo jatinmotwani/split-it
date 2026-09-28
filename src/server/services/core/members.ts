@@ -11,6 +11,7 @@ import { groupMembers, groups, user } from '@/server/db/schema';
 import { AppError, conflict, forbidden, notFound } from '@/server/http/errors';
 import { recordActivity } from './activity';
 import type { Membership } from './authz';
+import { refreshDirectKey } from './friends';
 import { memberStatus } from './groups';
 import { balanceList, memberNets } from './nets';
 
@@ -39,6 +40,8 @@ export async function addPlaceholder(
   { member, group }: Membership,
   displayName: string,
 ): Promise<MemberDto> {
+  if (group.type === 'direct')
+    throw conflict('direct_group', 'A 1:1 group is just the two of you.');
   const id = uuidv7();
   await getDb().transaction(async (tx) => {
     await tx
@@ -81,7 +84,12 @@ export async function mintClaimLink(
 
 async function spotByToken(token: string) {
   const [row] = await getDb()
-    .select({ member: groupMembers, groupName: groups.name, isAnonymous: user.isAnonymous })
+    .select({
+      member: groupMembers,
+      groupName: groups.name,
+      groupType: groups.type,
+      isAnonymous: user.isAnonymous,
+    })
     .from(groupMembers)
     .innerJoin(groups, eq(groups.id, groupMembers.groupId))
     .leftJoin(user, eq(user.id, groupMembers.userId))
@@ -120,7 +128,7 @@ export async function previewClaim(token: string, me: SessionUser | null): Promi
 
 /** Binds the caller to the spot. Single use: the token is cleared. */
 export async function claimSpot(token: string, me: SessionUser): Promise<ClaimResponse> {
-  const { member } = await spotByToken(token);
+  const { member, groupType } = await spotByToken(token);
   const mine = await isActiveMember(member.groupId, me.id);
   if (mine && mine.id !== member.id) {
     throw conflict('already_member', 'You’re already in this group under another name.');
@@ -133,6 +141,7 @@ export async function claimSpot(token: string, me: SessionUser): Promise<ClaimRe
       .where(and(eq(groupMembers.id, member.id), eq(groupMembers.claimTokenHash, hashToken(token))))
       .returning({ id: groupMembers.id });
     if (!done) throw notFound('This claim link has already been used. Ask for a new one.');
+    if (groupType === 'direct') await refreshDirectKey(tx, member.groupId);
     await recordActivity(tx, {
       groupId: member.groupId,
       actorMemberId: member.id,
@@ -190,6 +199,7 @@ export async function removeMember(
       if (heir)
         await tx.update(groupMembers).set({ role: 'owner' }).where(eq(groupMembers.id, heir.id));
     }
+    if (group.type === 'direct') await refreshDirectKey(tx, group.id);
     await recordActivity(tx, {
       groupId: group.id,
       actorMemberId: member.id,
@@ -213,6 +223,7 @@ export async function unlinkMember(
       .update(groupMembers)
       .set({ userId: null, joinedAt: null })
       .where(eq(groupMembers.id, target.id));
+    if (group.type === 'direct') await refreshDirectKey(tx, group.id);
     await recordActivity(tx, {
       groupId: group.id,
       actorMemberId: member.id,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { SaveAccountCard } from '@/features/auth/save-account-card';
 import { ExplainSheet } from '@/features/explain/explain-sheet';
+import { FriendLinkButton } from '@/features/friends/friend-link';
 import { InviteButton } from '@/features/invite/invite-sheet';
 import { GroupScreen, type GroupScreenProps } from './group-screen';
 import { useBalances, useEntries, useGroup } from './use-group-data';
@@ -19,7 +20,13 @@ export function GroupPageClient(props: Pick<GroupScreenProps, 'gid' | 'initial'>
     <>
       <GroupScreen
         {...props}
-        inviteAction={<InviteButton group={group} />}
+        inviteAction={
+          group.type === 'direct' ? (
+            <FriendLinkButton group={group} />
+          ) : (
+            <InviteButton group={group} />
+          )
+        }
         onBalanceTap={setExplaining}
         notice={
           me?.status === 'guest' && page.entries.length > 0 ? (

@@ -7,6 +7,7 @@ import { APP_NAME } from '@/config/app';
 import { GuestForm } from '@/features/auth/guest-form';
 import { HomeScreen } from '@/features/home/home-screen';
 import { getCurrentUser } from '@/server/auth/session';
+import { listFriends } from '@/server/services/core/friends';
 import { listMyGroups } from '@/server/services/core/groups';
 
 export default async function HomePage({
@@ -16,8 +17,19 @@ export default async function HomePage({
 }) {
   const user = await getCurrentUser();
   if (user) {
-    const [initial, sp] = await Promise.all([listMyGroups(user.id), searchParams]);
-    return <HomeScreen initial={initial} name={user.name} openNew={sp.new === '1'} />;
+    const [initial, friends, sp] = await Promise.all([
+      listMyGroups(user.id),
+      listFriends(user.id),
+      searchParams,
+    ]);
+    return (
+      <HomeScreen
+        initial={initial}
+        initialFriends={friends}
+        name={user.name}
+        openNew={sp.new === '1'}
+      />
+    );
   }
   return (
     <AppShell title={APP_NAME} actions={<ThemeToggle />}>

@@ -151,7 +151,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: the authz sweep covers comments; e2e: post and see a comment.
 - [x] **1.31** Activity feed screen in the group (paged, human sentences, links to entries).
   - Accept: e2e: an edit shows "Asha changed Dinner: ₹1,200 → ₹1,500".
-- [ ] **1.32** Friends 1: hidden `direct` groups, "Add friend" (pick a co-member or add by name → placeholder + claim link), 1:1 add-expense reusing the same form.
+- [x] **1.32** Friends 1: hidden `direct` groups, "Add friend" (pick a co-member or add by name → placeholder + claim link), 1:1 add-expense reusing the same form.
   - Accept: e2e: add a friend by name, record ₹300, send a claim link.
 - [ ] **1.33** Friends 2: friends list with cross-group balances per currency (Σ of active views, D4) and friend detail (per-group breakdown + explain).
   - Accept: property test: friend balance = Σ per-group active-view pairs.

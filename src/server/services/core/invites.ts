@@ -13,7 +13,9 @@ import { newInviteCode } from './groups';
 
 async function groupByCode(code: string) {
   const [g] = await getDb().select().from(groups).where(eq(groups.inviteCode, code));
-  if (!g) throw notFound('This invite link doesn’t work any more. Ask for a new one.');
+  // 1:1 groups have no invite: the friend gets a claim link instead.
+  if (!g || g.type === 'direct')
+    throw notFound('This invite link doesn’t work any more. Ask for a new one.');
   if (g.inviteExpiresAt && g.inviteExpiresAt < new Date()) {
     throw new AppError(410, 'invite_expired', 'This invite link has expired. Ask for a new one.');
   }

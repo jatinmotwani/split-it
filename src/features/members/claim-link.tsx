@@ -10,7 +10,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { GroupDetail, MemberDto } from '@/lib/contracts/groups';
 import type { ClaimLinkResponse } from '@/lib/contracts/members';
-import { claimMessage, copyText, whatsappUrl } from '@/features/invite/share';
+import { groupTitle } from '@/features/groups/title';
+import { claimMessage, copyText, friendClaimMessage, whatsappUrl } from '@/features/invite/share';
 import { useOrigin } from '@/features/invite/use-origin';
 
 /** Placeholders get a claim link; so do guests who lost their session (D3). Accounts sign in. */
@@ -56,7 +57,11 @@ export function ClaimLink({ group, member }: { group: GroupDetail; member: Membe
   }
 
   const link = `${origin}${mint.data.path}`;
-  const message = claimMessage(member.displayName, group.name, link, member.status === 'guest');
+  const me = group.members.find((m) => m.isMe)?.displayName ?? 'A friend';
+  const message =
+    group.type === 'direct' && member.status === 'placeholder'
+      ? friendClaimMessage(member.displayName, me, link)
+      : claimMessage(member.displayName, groupTitle(group), link, member.status === 'guest');
   return (
     <div className="grid w-full gap-2 rounded-lg bg-muted p-3">
       <Input

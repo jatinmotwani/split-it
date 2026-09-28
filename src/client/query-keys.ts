@@ -1,5 +1,6 @@
 export const qk = {
   groups: ['groups'] as const,
+  friends: ['friends'] as const,
   group: (gid: string) => ['group', gid] as const,
   balances: (gid: string) => ['balances', gid] as const,
   entries: (gid: string) => ['entries', gid] as const,

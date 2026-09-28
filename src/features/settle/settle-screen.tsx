@@ -79,7 +79,7 @@ export function SettleScreen({
   );
 
   const invalidate = () => {
-    for (const key of [qk.entries(gid), qk.balances(gid), qk.groups, qk.activity(gid)])
+    for (const key of [qk.entries(gid), qk.balances(gid), qk.groups, qk.friends, qk.activity(gid)])
       void qc.invalidateQueries({ queryKey: key });
   };
 

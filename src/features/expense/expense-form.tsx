@@ -17,6 +17,7 @@ import { formatMoney } from '@/lib/money/currency';
 import { cn } from '@/lib/cn';
 import { dayLabel, todayIso } from '@/features/group/dates';
 import { useEntryWrite } from '@/features/group/entry-writes';
+import { groupTitle } from '@/features/groups/title';
 import { nameMap } from '@/features/group/use-group-data';
 import { AmountKeypad, pressKey } from './amount-keypad';
 import { CategoryIcon } from './category-icon';
@@ -176,7 +177,9 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
     >
       <div className="grid gap-4">
         <div className="grid gap-1 pt-2 text-center" aria-live="polite">
-          <p className="text-sm text-muted-foreground">{group.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {group.type === 'direct' ? `With ${groupTitle(group)}` : group.name}
+          </p>
           <output
             aria-label="Amount"
             className={cn(

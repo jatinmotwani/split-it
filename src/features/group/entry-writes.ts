@@ -77,6 +77,7 @@ export function useEntryWrite(gid: string, scope?: string) {
         qk.entries(gid),
         qk.balances(gid),
         qk.groups,
+        qk.friends,
         qk.defaults(gid),
         qk.activity(gid),
         qk.revisions(gid, saved.id),

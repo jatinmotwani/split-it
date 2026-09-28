@@ -12,6 +12,7 @@ import type { GroupDetail } from '@/lib/contracts/groups';
 import { dayLabel, todayIso } from '@/features/group/dates';
 import { relativeTime } from '@/features/group/relative-time';
 import { nameMap, useGroup } from '@/features/group/use-group-data';
+import { groupTitle } from '@/features/groups/title';
 import { describeActivity } from './describe';
 
 const PAGE = 30;
@@ -49,7 +50,7 @@ export function ActivityScreen({
   return (
     <AppShell title="Activity" back={{ href: `/g/${gid}`, label: 'Back to group' }}>
       <div className="grid gap-4">
-        <p className="text-sm text-muted-foreground">{group.name}</p>
+        <p className="text-sm text-muted-foreground">{groupTitle(group)}</p>
         {items.length === 0 ? (
           <Card className="p-6 text-center font-semibold">Nothing has happened yet</Card>
         ) : null}

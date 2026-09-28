@@ -3,6 +3,7 @@ import { and, eq, isNull, or } from 'drizzle-orm';
 import { getDb } from '@/server/db';
 import { groupMembers, groups, user } from '@/server/db/schema';
 import { recordActivity } from '@/server/services/core/activity';
+import { refreshDirectKey } from '@/server/services/core/friends';
 
 /**
  * Runs when a guest signs in with Google or an email code, before Better Auth deletes the
@@ -54,6 +55,8 @@ export async function onGuestLinked(anonymousUserId: string, newUserId: string):
       .update(groups)
       .set({ createdByUserId: newUserId })
       .where(eq(groups.createdByUserId, anonymousUserId));
+    // 1:1 groups are keyed by both accounts; the guest's id just changed.
+    for (const spot of spots) await refreshDirectKey(tx, spot.groupId);
     // A new email account has no name yet: keep the one the guest chose.
     const [guest] = await tx
       .select({ name: user.name })

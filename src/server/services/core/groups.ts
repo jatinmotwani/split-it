@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomBytes } from 'node:crypto';
-import { and, asc, count, desc, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull } from 'drizzle-orm';
 import type {
   CreateGroupBody,
   GroupDetail,
@@ -107,22 +107,21 @@ export async function getGroupDetail(
   };
 }
 
-/** Home: my groups (not 1:1 ones), most recent activity first, with my balance in each. */
+/**
+ * Home: my groups (not 1:1 ones), most recent activity first, with my balance in each. Totals
+ * include 1:1 balances too.
+ */
 export async function listMyGroups(userId: string): Promise<GroupsResponse> {
   const db = getDb();
-  const mine = await db
+  const all = await db
     .select({ group: groups, memberId: groupMembers.id })
     .from(groupMembers)
     .innerJoin(groups, eq(groups.id, groupMembers.groupId))
-    .where(
-      and(
-        eq(groupMembers.userId, userId),
-        isNull(groupMembers.removedAt),
-        ne(groups.type, 'direct'),
-      ),
-    )
+    .where(and(eq(groupMembers.userId, userId), isNull(groupMembers.removedAt)))
     .orderBy(desc(groups.lastActivityAt), desc(groups.id));
-  if (mine.length === 0) return { groups: [], totals: [], lastUsedGroupId: null };
+  // 1:1 groups are listed as friends, but their balances count in the totals.
+  const mine = all.filter((m) => m.group.type !== 'direct');
+  if (all.length === 0) return { groups: [], totals: [], lastUsedGroupId: null };
 
   const groupIds = mine.map((m) => m.group.id);
   const [counts, nets, last] = await Promise.all([
@@ -131,7 +130,7 @@ export async function listMyGroups(userId: string): Promise<GroupsResponse> {
       .from(groupMembers)
       .where(and(inArray(groupMembers.groupId, groupIds), isNull(groupMembers.removedAt)))
       .groupBy(groupMembers.groupId),
-    memberNets(mine.map((m) => m.memberId)),
+    memberNets(all.map((m) => m.memberId)),
     db
       .select({ groupId: entries.groupId })
       .from(entries)
@@ -150,9 +149,12 @@ export async function listMyGroups(userId: string): Promise<GroupsResponse> {
   const countOf = new Map(counts.map((c) => [c.groupId, c.n]));
 
   const totals = new Map<string, number>();
+  for (const { memberId } of all) {
+    for (const b of balanceList(nets.get(memberId)))
+      totals.set(b.currency, (totals.get(b.currency) ?? 0) + b.net);
+  }
   const list = mine.map(({ group, memberId }) => {
     const balances = balanceList(nets.get(memberId));
-    for (const b of balances) totals.set(b.currency, (totals.get(b.currency) ?? 0) + b.net);
     return {
       id: group.id,
       name: group.name,
@@ -174,6 +176,9 @@ export async function updateGroup(
   myUserId: string,
 ): Promise<GroupDetail> {
   const { group, member } = membership;
+  if (group.type === 'direct' && patch.type !== undefined) {
+    throw conflict('direct_group', 'A 1:1 group can’t become a regular group.');
+  }
   const changed = Object.fromEntries(
     Object.entries(patch).filter(([k, v]) => group[k as keyof typeof group] !== v),
   ) as UpdateGroupBody;

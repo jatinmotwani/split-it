@@ -12,18 +12,22 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { APP_NAME } from '@/config/app';
+import type { FriendsResponse } from '@/lib/contracts/friends';
 import type { GroupsResponse } from '@/lib/contracts/groups';
 import { cn } from '@/lib/cn';
+import { FriendsSection, useFriends } from '@/features/friends/friends-section';
 import { GroupIcon } from '@/features/groups/group-icon';
 import { NewGroupSheet } from '@/features/groups/new-group-sheet';
 import { balanceLabel, toneClass } from '@/features/money/balance';
 
 export function HomeScreen({
   initial,
+  initialFriends,
   name,
   openNew,
 }: {
   initial: GroupsResponse;
+  initialFriends: FriendsResponse;
   name: string;
   openNew?: boolean;
 }) {
@@ -35,6 +39,7 @@ export function HomeScreen({
     ...(wroteRecently() ? { initialDataUpdatedAt: 0 } : {}),
   });
   const [newOpen, setNewOpen] = useState(!!openNew);
+  const friendCount = useFriends(initialFriends).data.friends.length;
   const owed = data.totals.filter((t) => t.net > 0);
   const owe = data.totals.filter((t) => t.net < 0);
 
@@ -57,7 +62,7 @@ export function HomeScreen({
       <div className="grid gap-5">
         <p className="text-muted-foreground">Hi, {name || 'there'}</p>
 
-        {data.groups.length > 0 ? (
+        {data.groups.length > 0 || friendCount > 0 ? (
           <Card className="grid gap-1 p-4" aria-label="Overall balance">
             {owed.length === 0 && owe.length === 0 ? (
               <p className="text-lg font-semibold">You’re all settled up</p>
@@ -72,7 +77,7 @@ export function HomeScreen({
                 {balanceLabel(t.net, t.currency).text.replace(/^./, (c) => c.toUpperCase())}
               </p>
             ))}
-            <p className="text-sm text-muted-foreground">Across all your groups</p>
+            <p className="text-sm text-muted-foreground">Across all your groups and friends</p>
           </Card>
         ) : null}
 
@@ -133,6 +138,8 @@ export function HomeScreen({
             </ul>
           )}
         </section>
+
+        <FriendsSection initial={initialFriends} />
       </div>
 
       {data.groups.length > 0 ? (

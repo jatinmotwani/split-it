@@ -20,6 +20,11 @@ export function claimMessage(
     : `${name}, your spot in “${groupName}” on ${APP_NAME} is ready and your balance is already there. Tap to claim it: ${link}`;
 }
 
+/** Claim link for the friend in a 1:1 group. */
+export function friendClaimMessage(friend: string, from: string, link: string): string {
+  return `${friend}, ${from} is splitting expenses with you on ${APP_NAME}. Tap to see what’s between you, no sign-up needed: ${link}`;
+}
+
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);

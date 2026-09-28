@@ -12,6 +12,7 @@ import type { GroupDetail } from '@/lib/contracts/groups';
 import { cn } from '@/lib/cn';
 import { formatMoney } from '@/lib/money/currency';
 import { balanceLabel, toneClass } from '@/features/money/balance';
+import { groupTitle } from '@/features/groups/title';
 import { dayLabel } from './dates';
 import { EntryRow } from './entry-row';
 import { mergeEntries, usePendingEntries } from './entry-writes';
@@ -55,7 +56,7 @@ export function GroupScreen({
 
   return (
     <AppShell
-      title={group.name}
+      title={groupTitle(group)}
       back={{ href: '/', label: 'Back to groups' }}
       actions={
         <>
@@ -71,13 +72,15 @@ export function GroupScreen({
           >
             <ActivityIcon className="size-5" />
           </Link>
-          <Link
-            href={`/g/${gid}/settings`}
-            aria-label="Group settings"
-            className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-muted"
-          >
-            <Settings className="size-5" />
-          </Link>
+          {group.type !== 'direct' ? (
+            <Link
+              href={`/g/${gid}/settings`}
+              aria-label="Group settings"
+              className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-muted"
+            >
+              <Settings className="size-5" />
+            </Link>
+          ) : null}
         </>
       }
     >
