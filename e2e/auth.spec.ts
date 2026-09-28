@@ -31,5 +31,7 @@ test('a wrong code shows an error', async ({ page, request }) => {
   const real = await readCode(request, email);
   await page.getByLabel('Code').fill(real === '111111' ? '222222' : '111111');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(
+    page.getByText('That code didn’t work. Check it, or send yourself a new one.'),
+  ).toBeVisible();
 });

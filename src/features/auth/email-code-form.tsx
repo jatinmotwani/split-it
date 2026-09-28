@@ -36,7 +36,13 @@ export function EmailCodeForm({ next = '/' }: { next?: string }) {
     setError(null);
     const res = await authClient.signIn.emailOtp({ email: email.trim(), otp: code.trim() });
     setBusy(false);
-    if (res.error) return setError(res.error.message ?? 'That code didn’t work. Try again.');
+    if (res.error) {
+      return setError(
+        res.error.status === 429
+          ? 'Too many tries. Wait a minute, then try again.'
+          : 'That code didn’t work. Check it, or send yourself a new one.',
+      );
+    }
     router.push(next);
     router.refresh();
   }
