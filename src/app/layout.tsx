@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
+import { Providers } from '@/components/providers';
 import { APP_DESCRIPTION, APP_NAME } from '@/config/app';
 import './globals.css';
 
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
+  icons: { icon: '/icons/icon.svg', apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
@@ -30,7 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script id="theme" strategy="beforeInteractive">
           {themeScript}
         </Script>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
