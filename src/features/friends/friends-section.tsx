@@ -44,7 +44,7 @@ export function FriendsSection({ initial }: { initial: FriendsResponse }) {
           {data.friends.map((f) => (
             <li key={f.groupId}>
               <Link
-                href={`/g/${f.groupId}`}
+                href={`/friends/${f.groupId}`}
                 className="flex min-h-14 items-center gap-3 rounded-xl border bg-card p-3 hover:bg-muted"
               >
                 <span className="min-w-0 flex-1">

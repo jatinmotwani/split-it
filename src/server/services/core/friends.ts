@@ -4,18 +4,20 @@ import type {
   AddFriendBody,
   AddFriendResponse,
   FriendCandidate,
+  FriendGroupBalance,
   FriendsResponse,
   FriendSummary,
 } from '@/lib/contracts/friends';
 import { uuidv7 } from '@/lib/ids';
+import { friendBalance, pairNet, suggestions, type PairView } from '@/lib/money/ledger';
 import type { SessionUser } from '@/server/auth/session';
 import { getDb, type Executor } from '@/server/db';
 import { groupMembers, groups, user } from '@/server/db/schema';
 import { conflict, notFound } from '@/server/http/errors';
 import { recordActivity } from './activity';
 import { requireMember } from './authz';
+import { loadLedger } from './balances';
 import { memberStatus, newInviteCode } from './groups';
-import { balanceList, memberNets } from './nets';
 
 /** "userA:userB", sorted, for the one 1:1 group between two real users. */
 export const directKeyOf = (a: string, b: string) => [a, b].sort().join(':');
@@ -146,22 +148,33 @@ export async function addFriend(me: SessionUser, input: AddFriendBody): Promise<
   return { groupId: input.id, friendMemberId };
 }
 
-/** My friends (the other person in each 1:1 group) and people from my groups I could add. */
+/**
+ * My friends (the other person in each 1:1 group) with our balance summed over every group we
+ * share, each group in its active view (D4), plus people from my groups I could add.
+ */
 export async function listFriends(userId: string): Promise<FriendsResponse> {
   const db = getDb();
   const mine = await db
-    .select({ groupId: groupMembers.groupId, memberId: groupMembers.id, type: groups.type })
+    .select({
+      groupId: groupMembers.groupId,
+      memberId: groupMembers.id,
+      type: groups.type,
+      name: groups.name,
+      simplifyDebts: groups.simplifyDebts,
+    })
     .from(groupMembers)
     .innerJoin(groups, eq(groups.id, groupMembers.groupId))
     .where(and(eq(groupMembers.userId, userId), isNull(groupMembers.removedAt)));
   if (mine.length === 0) return { friends: [], candidates: [] };
 
-  const others = await db
+  // Everyone in my groups, including people who left (old debts can still be between us).
+  const people = await db
     .select({
       id: groupMembers.id,
       groupId: groupMembers.groupId,
       userId: groupMembers.userId,
       displayName: groupMembers.displayName,
+      removedAt: groupMembers.removedAt,
       isAnonymous: user.isAnonymous,
       groupName: groups.name,
       type: groups.type,
@@ -170,32 +183,63 @@ export async function listFriends(userId: string): Promise<FriendsResponse> {
     .innerJoin(groups, eq(groups.id, groupMembers.groupId))
     .leftJoin(user, eq(user.id, groupMembers.userId))
     .where(
-      and(
-        inArray(
-          groupMembers.groupId,
-          mine.map((m) => m.groupId),
-        ),
-        isNull(groupMembers.removedAt),
+      inArray(
+        groupMembers.groupId,
+        mine.map((m) => m.groupId),
       ),
     )
     .orderBy(asc(groupMembers.displayName), asc(groupMembers.id));
-  const notMe = others.filter((o) => o.userId !== userId);
+  const notMe = people.filter((o) => o.userId !== userId);
 
-  const myDirect = mine.filter((m) => m.type === 'direct');
-  const nets = await memberNets(myDirect.map((m) => m.memberId));
-  const friends: FriendSummary[] = myDirect.flatMap((m) => {
-    const friend = notMe.find((o) => o.groupId === m.groupId);
-    if (!friend) return [];
-    return [
-      {
-        groupId: m.groupId,
-        friendMemberId: friend.id,
-        name: friend.displayName,
-        status: memberStatus(friend.userId, friend.isAnonymous),
-        balances: balanceList(nets.get(m.memberId)),
-      },
-    ];
-  });
+  // Each group's active view, loaded once.
+  const views = new Map(
+    await Promise.all(
+      mine.map(
+        async (g) =>
+          [g.groupId, suggestions((await loadLedger(g.groupId)).ledger, g.simplifyDebts)] as const,
+      ),
+    ),
+  );
+
+  const friends: FriendSummary[] = [];
+  for (const d of mine.filter((m) => m.type === 'direct')) {
+    const friend = notMe.find((o) => o.groupId === d.groupId && !o.removedAt);
+    if (!friend) continue;
+    // The same person in other groups: by account once they have one; a placeholder is only here.
+    const spots = friend.userId ? notMe.filter((o) => o.userId === friend.userId) : [friend];
+    const perGroup: FriendGroupBalance[] = [];
+    const pairs: PairView[] = [];
+    for (const spot of spots) {
+      const g = mine.find((m) => m.groupId === spot.groupId);
+      if (!g) continue;
+      const pair = { transfers: views.get(g.groupId) ?? [], me: g.memberId, other: spot.id };
+      pairs.push(pair);
+      const balances = Object.entries(pairNet(pair.transfers, pair.me, pair.other))
+        .map(([currency, net]) => ({ currency, net }))
+        .sort((a, b) => a.currency.localeCompare(b.currency));
+      if (balances.length > 0 || g.type === 'direct') {
+        perGroup.push({
+          groupId: g.groupId,
+          name: g.type === 'direct' ? null : g.name,
+          friendMemberId: spot.id,
+          balances,
+        });
+      }
+    }
+    perGroup.sort((a, b) =>
+      a.name === null ? -1 : b.name === null ? 1 : a.name.localeCompare(b.name),
+    );
+    friends.push({
+      groupId: d.groupId,
+      friendMemberId: friend.id,
+      name: friend.displayName,
+      status: memberStatus(friend.userId, friend.isAnonymous),
+      balances: Object.entries(friendBalance(pairs))
+        .map(([currency, net]) => ({ currency, net }))
+        .sort((a, b) => a.currency.localeCompare(b.currency)),
+      groups: perGroup,
+    });
+  }
 
   // Candidates: people from my shared groups who aren't already a friend. Joined people once
   // (by account); placeholders per group, since they can't be told apart yet.
@@ -205,7 +249,7 @@ export async function listFriends(userId: string): Promise<FriendsResponse> {
   const seen = new Set<string>();
   const candidates: FriendCandidate[] = [];
   for (const o of notMe) {
-    if (o.type === 'direct') continue;
+    if (o.type === 'direct' || o.removedAt) continue;
     if (o.userId) {
       if (friendUsers.has(o.userId) || seen.has(o.userId)) continue;
       seen.add(o.userId);

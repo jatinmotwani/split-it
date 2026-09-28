@@ -5,7 +5,9 @@ import {
   contributions,
   explainNet,
   explainPair,
+  friendBalance,
   nets,
+  pairNet,
   pairwise,
   simplify,
   suggestions,
@@ -246,5 +248,86 @@ describe('ledger properties', () => {
         },
       ),
     );
+  });
+
+  it('in either view, my pair balances with everyone add up to my net', () => {
+    fc.assert(
+      fc.property(ledgerArb, fc.boolean(), fc.constantFrom(...MEMBERS), (entries, simple, me) => {
+        const view = suggestions(entries, simple);
+        const all = nets(entries);
+        const summed: Record<string, number> = {};
+        for (const other of MEMBERS) {
+          if (other === me) continue;
+          for (const [c, v] of Object.entries(pairNet(view, me, other)))
+            summed[c] = (summed[c] ?? 0) + v;
+        }
+        return ['INR', 'USD'].every((c) => (summed[c] ?? 0) === (all[c]?.[me] ?? 0));
+      }),
+    );
+  });
+
+  it('a friend balance is the sum of each shared group’s active-view pair', () => {
+    const groupArb = fc.record({
+      entries: ledgerArb,
+      simplifyDebts: fc.boolean(),
+      me: fc.constantFrom(...MEMBERS),
+      friend: fc.constantFrom(...MEMBERS),
+    });
+    fc.assert(
+      fc.property(fc.array(groupArb, { maxLength: 4 }), (groups) => {
+        const shared = groups.filter((g) => g.me !== g.friend);
+        const got = friendBalance(
+          shared.map((g) => ({
+            transfers: suggestions(g.entries, g.simplifyDebts),
+            me: g.me,
+            other: g.friend,
+          })),
+        );
+        // Oracle: raw view from the per-entry explanation, simplified view from the plan itself.
+        const want: Record<string, number> = {};
+        for (const g of shared) {
+          if (g.simplifyDebts) {
+            for (const t of simplify(nets(g.entries))) {
+              const v =
+                t.from === g.friend && t.to === g.me
+                  ? t.amount
+                  : t.from === g.me && t.to === g.friend
+                    ? -t.amount
+                    : 0;
+              want[t.currency] = (want[t.currency] ?? 0) + v;
+            }
+          } else {
+            for (const r of explainPair(g.entries, g.me, g.friend))
+              want[r.currency] = (want[r.currency] ?? 0) + r.amount;
+          }
+        }
+        for (const c of Object.keys(want)) if (want[c] === 0) delete want[c];
+        expect(got).toEqual(want);
+      }),
+    );
+  });
+});
+
+describe('pairNet and friendBalance', () => {
+  const view = [
+    { currency: 'INR', from: N, to: A, amount: 300 },
+    { currency: 'INR', from: A, to: R, amount: 100 },
+    { currency: 'USD', from: R, to: A, amount: 5 },
+  ];
+
+  it('reads what the other person owes me, signed, per currency', () => {
+    expect(pairNet(view, A, N)).toEqual({ INR: 300 });
+    expect(pairNet(view, A, R)).toEqual({ INR: -100, USD: 5 });
+    expect(pairNet(view, N, R)).toEqual({});
+  });
+
+  it('adds pairs across groups and drops zeros', () => {
+    expect(
+      friendBalance([
+        { transfers: view, me: A, other: R },
+        { transfers: [{ currency: 'INR', from: R, to: A, amount: 100 }], me: A, other: R },
+      ]),
+    ).toEqual({ USD: 5 });
+    expect(friendBalance([])).toEqual({});
   });
 });

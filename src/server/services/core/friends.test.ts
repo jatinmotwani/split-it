@@ -61,6 +61,7 @@ describe('friends', () => {
         name: 'Kiran',
         status: 'placeholder',
         balances: [],
+        groups: [{ groupId: id, name: null, friendMemberId: kiran.friendMemberId, balances: [] }],
       },
     ]);
     expect((await home(s.asha)).groups.map((g) => g.id)).not.toContain(id);
@@ -110,6 +111,51 @@ describe('friends', () => {
     expect(after.friends.map((f) => f.name).sort()).toEqual(['Kiran', 'Ravi']);
     // Ravi sees Asha as a friend too.
     expect((await friends(s.raviUser)).friends.map((f) => f.groupId)).toContain(first.groupId);
+  });
+
+  it('sums a friend balance over every shared group, each in its active view (D4)', async () => {
+    const ravi = (await friends(s.asha)).friends.find((f) => f.name === 'Ravi')!;
+    // Goa trip (simplified): Asha pays ₹900 for all three → Ravi and Neel each owe Asha ₹300.
+    await put(
+      s.asha,
+      s.groupId,
+      uuidv7(),
+      expenseBody({ amount: 90_000, payer: s.A, participants: [s.A, s.R, s.N] }),
+    );
+    // 1:1: Ravi pays ₹200, split equally → Asha owes Ravi ₹100.
+    const members = await db.query.groupMembers.findMany({
+      where: (m, { eq: e }) => e(m.groupId, ravi.groupId),
+    });
+    const ashaThere = members.find((m) => m.id !== ravi.friendMemberId)!;
+    await put(
+      s.raviUser,
+      ravi.groupId,
+      uuidv7(),
+      expenseBody({
+        amount: 20_000,
+        payer: ravi.friendMemberId,
+        participants: [ashaThere.id, ravi.friendMemberId],
+      }),
+    );
+    const after = (await friends(s.asha)).friends.find((f) => f.name === 'Ravi')!;
+    expect(after.balances).toEqual([{ currency: 'INR', net: 20_000 }]);
+    expect(after.groups).toEqual([
+      {
+        groupId: ravi.groupId,
+        name: null,
+        friendMemberId: ravi.friendMemberId,
+        balances: [{ currency: 'INR', net: -10_000 }],
+      },
+      {
+        groupId: s.groupId,
+        name: 'Goa trip',
+        friendMemberId: s.R,
+        balances: [{ currency: 'INR', net: 30_000 }],
+      },
+    ]);
+    // Ravi sees the mirror image.
+    const mirror = (await friends(s.raviUser)).friends.find((f) => f.name === 'Asha')!;
+    expect(mirror.balances).toEqual([{ currency: 'INR', net: -20_000 }]);
   });
 
   it('refuses people from groups I’m not in, and myself', async () => {

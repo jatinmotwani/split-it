@@ -9,11 +9,14 @@ import { GroupScreen, type GroupScreenProps } from './group-screen';
 import { useBalances, useEntries, useGroup } from './use-group-data';
 
 /** Wires the group screen's slots: invite sheet, Explain sheet, and the guest save-account card. */
-export function GroupPageClient(props: Pick<GroupScreenProps, 'gid' | 'initial'>) {
+export function GroupPageClient({
+  initialExplain = null,
+  ...props
+}: Pick<GroupScreenProps, 'gid' | 'initial'> & { initialExplain?: string | null }) {
   const { data: group } = useGroup(props.gid, props.initial.group);
   const { data: balances } = useBalances(props.gid, props.initial.balances);
   const { data: page } = useEntries(props.gid, props.initial.entries);
-  const [explaining, setExplaining] = useState<string | null>(null);
+  const [explaining, setExplaining] = useState<string | null>(initialExplain);
   const me = group.members.find((m) => m.isMe);
   const alone = !group.members.some((m) => !m.isMe && m.active && m.status !== 'placeholder');
   return (

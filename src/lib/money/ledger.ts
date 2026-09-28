@@ -138,6 +138,37 @@ export function suggestions(entries: readonly LedgerEntry[], simplifyDebts: bool
   return simplifyDebts ? simplify(nets(entries)) : pairwise(entries);
 }
 
+/** What `other` owes `me` in one view's transfers, per currency; negative when I owe them. */
+export function pairNet(
+  transfers: readonly Transfer[],
+  me: MemberId,
+  other: MemberId,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of transfers) {
+    const v =
+      t.from === other && t.to === me ? t.amount : t.from === me && t.to === other ? -t.amount : 0;
+    if (v !== 0) out[t.currency] = (out[t.currency] ?? 0) + v;
+  }
+  return out;
+}
+
+export type PairView = { transfers: readonly Transfer[]; me: MemberId; other: MemberId };
+
+/**
+ * A friend balance (D4): the sum over shared groups of each group's active-view pair (member ids
+ * differ per group, so each view names its own pair). Per currency; zero balances omitted.
+ */
+export function friendBalance(views: readonly PairView[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const v of views) {
+    for (const [c, amount] of Object.entries(pairNet(v.transfers, v.me, v.other)))
+      out[c] = (out[c] ?? 0) + amount;
+  }
+  for (const c of Object.keys(out)) if (out[c] === 0) delete out[c];
+  return out;
+}
+
 export type PairRow = { entryId: string; currency: string; amount: number };
 
 /**

@@ -153,7 +153,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: e2e: an edit shows "Asha changed Dinner: ₹1,200 → ₹1,500".
 - [x] **1.32** Friends 1: hidden `direct` groups, "Add friend" (pick a co-member or add by name → placeholder + claim link), 1:1 add-expense reusing the same form.
   - Accept: e2e: add a friend by name, record ₹300, send a claim link.
-- [ ] **1.33** Friends 2: friends list with cross-group balances per currency (Σ of active views, D4) and friend detail (per-group breakdown + explain).
+- [x] **1.33** Friends 2: friends list with cross-group balances per currency (Σ of active views, D4) and friend detail (per-group breakdown + explain).
   - Accept: property test: friend balance = Σ per-group active-view pairs.
 - [ ] **1.34** Phase 1 exit e2e (friends flow) + docs pass (`CLAUDE.md` gotchas, `ARCHITECTURE.md` updates).
   - Accept: CI is green; deployed.
