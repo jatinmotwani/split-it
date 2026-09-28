@@ -50,8 +50,9 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: a guest session survives a reload; linking Google afterwards gives one real user, and the anonymous user is deleted.
 - [x] **0.10** `route()` wrapper: session, Zod parse, `AppError` → problem JSON, Origin check on mutations, request id, `server-only`. First contract + route: `GET /api/v1/me`. Typed `client/api.ts`.
   - Accept: unit tests cover 400 (bad body), 401 (no session), 403 (bad Origin) and the success shape.
-- [ ] **0.11** UI base: Tailwind v4, shadcn/ui init, lucide, system dark mode + toggle, mobile app shell (top bar, safe areas), `formatMoney` placeholder text.
+- [x] **0.11** UI base: Tailwind v4, shadcn/ui init, lucide, system dark mode + toggle, mobile app shell (top bar, safe areas), `formatMoney` placeholder text.
   - Accept: home renders in light and dark; axe reports no violations; tap targets ≥ 44 px.
+  - Status: done. shadcn's registry isn't reachable from the build sandbox, so the components are hand-written in shadcn's conventions (cva + tailwind-merge, same token names). The bottom sheet uses the native <dialog> element instead of Radix, which keeps dialog JS off core routes. System fonts only: no font download on low-end Android.
 - [ ] **0.12** PWA: `@serwist/turbopack` (`withSerwist`, `createSerwistRoute`), `src/sw.ts` precaching the shell, `manifest.ts`, placeholder icons, `/offline` fallback. Disabled in dev.
   - Accept: a production build is installable in Chrome; with the network off, reloading shows `/offline`.
 - [ ] **0.13** Observability: Sentry (server + minimal browser init, `beforeSend` scrubbing) and PostHog `track()` (server, `after()`, per-event Zod allowlist) + `/api/events` beacon endpoint. All of it does nothing without env vars.

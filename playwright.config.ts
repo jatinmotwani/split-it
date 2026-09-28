@@ -24,15 +24,23 @@ export default defineConfig({
   projects: [{ name: 'mobile-chrome', use: { ...devices['Pixel 7'] } }],
   webServer: {
     command: process.env.E2E_SKIP_BUILD
-      ? `pnpm start --port ${PORT}`
-      : `pnpm build && pnpm start --port ${PORT}`,
+      ? `pnpm db:migrate && pnpm start --port ${PORT}`
+      : `pnpm db:migrate && pnpm build && pnpm start --port ${PORT}`,
     url: baseURL,
     timeout: 240_000,
     reuseExistingServer: !process.env.CI,
     env: {
       APP_URL: baseURL,
       BETTER_AUTH_URL: baseURL,
-      ...(process.env.E2E_DATABASE_URL ? { DATABASE_URL: process.env.E2E_DATABASE_URL } : {}),
+      BETTER_AUTH_SECRET:
+        process.env.BETTER_AUTH_SECRET ?? 'e2e-only-secret-e2e-only-secret-e2e-only',
+      ENABLE_DEV_OUTBOX: '1',
+      ...(process.env.E2E_DATABASE_URL
+        ? {
+            DATABASE_URL: process.env.E2E_DATABASE_URL,
+            DATABASE_URL_UNPOOLED: process.env.E2E_DATABASE_URL,
+          }
+        : {}),
     },
   },
 });

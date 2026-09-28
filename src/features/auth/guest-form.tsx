@@ -3,14 +3,21 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { authClient } from '@/client/auth-client';
+import { ErrorText } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field, Label } from '@/components/ui/label';
 
-/** Name-only guest sign-in (SPEC §2.6). Returns to `next` afterwards. */
+/** Name-only guest sign-in (SPEC §2.6). Goes to `next` afterwards. */
 export function GuestForm({
   next = '/',
   cta = 'Continue as guest',
+  onDone,
 }: {
   next?: string;
   cta?: string;
+  /** Called instead of navigating, e.g. when the page itself continues the flow. */
+  onDone?: () => void | Promise<void>;
 }) {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -29,25 +36,32 @@ export function GuestForm({
       return setError(signIn.error.message ?? "Couldn't start a guest session. Try again.");
     }
     await authClient.updateUser({ name: trimmed });
+    if (onDone) {
+      await onDone();
+      setBusy(false);
+      return;
+    }
     router.push(next);
     router.refresh();
   }
 
   return (
-    <form onSubmit={submit}>
-      <label htmlFor="guest-name">Your name</label>
-      <input
-        id="guest-name"
-        autoComplete="given-name"
-        maxLength={40}
-        required
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <button type="submit" disabled={busy}>
-        {cta}
-      </button>
-      {error ? <p role="alert">{error}</p> : null}
+    <form onSubmit={submit} className="grid gap-3">
+      <Field>
+        <Label htmlFor="guest-name">Your name</Label>
+        <Input
+          id="guest-name"
+          autoComplete="given-name"
+          maxLength={40}
+          placeholder="e.g. Asha"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </Field>
+      <Button type="submit" disabled={busy} block>
+        {busy ? 'Just a moment…' : cta}
+      </Button>
+      {error ? <ErrorText>{error}</ErrorText> : null}
     </form>
   );
 }
