@@ -16,7 +16,22 @@ test('signs in with an email code, then signs out', async ({ page, request }) =>
 
   await page.getByLabel('Code').fill(await readCode(request, email));
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByText(/^Hi, /)).toBeVisible();
+  await page.getByLabel('What should friends call you?').fill('Meera');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByText('Hi, Meera')).toBeVisible();
+
+  // Signing in again skips the name step.
+  await page.getByRole('link', { name: 'Account' }).click();
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('button', { name: 'Start as a guest' })).toBeVisible();
+  await page.goto('/sign-in');
+  await page.getByLabel('Email').fill(email);
+  await page.getByRole('button', { name: 'Email me a code' }).click();
+  await expect(page.getByLabel('Code')).toBeVisible();
+  const again = await readCode(request, email);
+  await page.getByLabel('Code').fill(again);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByText('Hi, Meera')).toBeVisible();
 
   await page.getByRole('link', { name: 'Account' }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();

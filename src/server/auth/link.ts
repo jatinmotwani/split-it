@@ -1,13 +1,14 @@
 import 'server-only';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, or } from 'drizzle-orm';
 import { getDb } from '@/server/db';
-import { groupMembers, groups } from '@/server/db/schema';
+import { groupMembers, groups, user } from '@/server/db/schema';
 import { recordActivity } from '@/server/services/core/activity';
 
 /**
  * Runs when a guest signs in with Google or an email code, before Better Auth deletes the
  * anonymous user (ARCHITECTURE §8). Every group spot moves to the real account. If that account
- * already has a spot in the same group, the guest's spot becomes a placeholder instead.
+ * already has a spot in the same group, the guest's spot becomes a placeholder instead. A
+ * nameless new account takes the guest's name.
  */
 export async function onGuestLinked(anonymousUserId: string, newUserId: string): Promise<void> {
   const db = getDb();
@@ -53,5 +54,16 @@ export async function onGuestLinked(anonymousUserId: string, newUserId: string):
       .update(groups)
       .set({ createdByUserId: newUserId })
       .where(eq(groups.createdByUserId, anonymousUserId));
+    // A new email account has no name yet: keep the one the guest chose.
+    const [guest] = await tx
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, anonymousUserId));
+    if (guest?.name) {
+      await tx
+        .update(user)
+        .set({ name: guest.name })
+        .where(and(eq(user.id, newUserId), or(eq(user.name, ''), isNull(user.name))));
+    }
   });
 }

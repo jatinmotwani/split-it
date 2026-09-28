@@ -36,6 +36,7 @@ describe('guest sessions', () => {
     const anonCookie = cookieFrom(anon);
     const guest = await getSessionUser(new Headers({ cookie: anonCookie }));
     expect(guest?.isAnonymous).toBe(true);
+    await db.update(user).set({ name: 'Priya' }).where(eq(user.id, guest!.id));
 
     const email = 'priya@example.in';
     await getAuth().api.sendVerificationOTP({ body: { email, type: 'sign-in' } });
@@ -50,7 +51,8 @@ describe('guest sessions', () => {
     expect(linked.status).toBe(200);
 
     const me = await getSessionUser(new Headers({ cookie: cookieFrom(linked) }));
-    expect(me).toMatchObject({ email, isAnonymous: false });
+    // The new account keeps the name the guest chose.
+    expect(me).toMatchObject({ email, name: 'Priya', isAnonymous: false });
     const leftover = await db.select().from(user).where(eq(user.id, guest!.id));
     expect(leftover).toEqual([]);
   });

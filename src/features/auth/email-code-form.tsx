@@ -12,7 +12,8 @@ export function EmailCodeForm({ next = '/' }: { next?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [name, setName] = useState('');
+  const [step, setStep] = useState<'email' | 'code' | 'name'>('email');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,8 +44,49 @@ export function EmailCodeForm({ next = '/' }: { next?: string }) {
           : 'That code didn’t work. Check it, or send yourself a new one.',
       );
     }
+    // New accounts have no name yet; friends need one to see who paid.
+    const session = await authClient.getSession();
+    if (!session.data?.user.name?.trim()) return setStep('name');
+    done();
+  }
+
+  function done() {
     router.push(next);
     router.refresh();
+  }
+
+  async function saveName(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) return setError('Add your name so friends know who you are.');
+    setBusy(true);
+    setError(null);
+    const res = await authClient.updateUser({ name: trimmed });
+    setBusy(false);
+    if (res.error) return setError('Couldn’t save your name. Try again.');
+    done();
+  }
+
+  if (step === 'name') {
+    return (
+      <form onSubmit={saveName} className="grid gap-3">
+        <Field>
+          <Label htmlFor="account-name">What should friends call you?</Label>
+          <Input
+            id="account-name"
+            autoComplete="given-name"
+            maxLength={40}
+            placeholder="e.g. Asha"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Field>
+        <Button type="submit" disabled={busy} block>
+          {busy ? 'Saving…' : 'Continue'}
+        </Button>
+        {error ? <ErrorText>{error}</ErrorText> : null}
+      </form>
+    );
   }
 
   if (step === 'email') {
