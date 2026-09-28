@@ -32,7 +32,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: `pnpm dev` shows a placeholder home with APP_NAME; `pnpm typecheck` passes.
 - [x] **0.2** ESLint flat config (next, typescript-eslint, `react/no-danger`, `no-restricted-imports` layer zones from ARCHITECTURE §3) and Prettier. Scripts `lint`, `format`, `format:check`.
   - Accept: `pnpm lint` passes; a deliberate `features → server` import fails lint.
-- [ ] **0.3** Vitest + fast-check + v8 coverage with a **100% branch threshold on `src/lib/money/**`**. One sample property test.
+- [x] **0.3** Vitest + fast-check + v8 coverage with a **100% branch threshold on `src/lib/money/**`**. One sample property test.
   - Accept: `pnpm test` is green; lowering coverage in `lib/money` fails the run.
 - [ ] **0.4** Playwright (Pixel 7 viewport, Chromium) + `@axe-core/playwright`; `e2e/smoke.spec.ts` opens `/` and runs axe.
   - Accept: `pnpm e2e` is green locally.
