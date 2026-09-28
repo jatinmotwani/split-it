@@ -63,3 +63,24 @@ test('typing on a physical keyboard works too, and the payer and date can change
   await expect(row).toContainText('Ravi paid ₹600');
   await expect(row).toContainText('you borrowed');
 });
+
+test('the description suggests a category, and a picked one sticks', async ({ page }) => {
+  await startAsGuest(page, 'Asha');
+  await createGroup(page, 'Goa trip');
+  await page.getByRole('link', { name: 'Add an expense' }).click();
+  await typeAmount(page, '450');
+  const description = page.getByLabel('Description');
+  await description.fill('Uber to airport');
+  await expect(page.getByRole('button', { name: 'Transport' })).toBeVisible();
+  await description.fill('Swiggy');
+  await expect(page.getByRole('button', { name: 'Food & drink' })).toBeVisible();
+
+  // Picking one by hand wins over later typing.
+  await page.getByRole('button', { name: 'Food & drink' }).click();
+  await page.getByRole('radio', { name: 'Groceries' }).click();
+  await description.fill('Swiggy Instamart order');
+  await expect(page.getByRole('button', { name: 'Groceries' })).toBeVisible();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('link', { name: /Swiggy Instamart/ }).click();
+  await expect(page.getByText('Groceries')).toBeVisible();
+});

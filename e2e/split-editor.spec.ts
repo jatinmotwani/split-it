@@ -21,8 +21,8 @@ test('exact split, category, and two payers', async ({ page }) => {
   await split.getByLabel('You').fill('700');
   await expect(split.getByText('Adds up to ₹1,000.00')).toBeVisible();
   await split.getByRole('button', { name: 'Done' }).click();
-  await page.getByRole('button', { name: 'Category' }).click();
-  await page.getByRole('radio', { name: 'Bills & utilities' }).click();
+  // "Electricity" suggests the category by itself.
+  await expect(page.getByRole('button', { name: 'Bills & utilities' })).toBeVisible();
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('link', { name: /Electricity/ })).toContainText('₹300');
 

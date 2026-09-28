@@ -17,6 +17,8 @@ export type ExpenseFormState = {
   currency: string;
   date: string;
   category: string | null;
+  /** True once the user chose a category; until then it follows the description (1.28). */
+  categoryPicked: boolean;
   /** Single payer (common case) or explicit amounts per payer. */
   payerMode: 'single' | 'multiple';
   payerId: string;
@@ -50,6 +52,7 @@ function initialState(
       currency: entry.currency,
       date: entry.date,
       category: entry.category,
+      categoryPicked: entry.category !== null,
       payerMode: entry.payers.length === 1 ? 'single' : 'multiple',
       payerId: entry.payers[0]?.memberId ?? group.myMemberId,
       payerAmounts: Object.fromEntries(entry.payers.map((p) => [p.memberId, txt(p.amount)])),
@@ -74,6 +77,7 @@ function initialState(
     currency: defaults?.currency ?? group.defaultCurrency,
     date: todayIso(),
     category: null,
+    categoryPicked: false,
     payerMode: 'single',
     payerId: payer,
     payerAmounts: {},

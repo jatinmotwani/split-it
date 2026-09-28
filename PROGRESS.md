@@ -143,7 +143,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 **Exit e2e:** add a friend, record a 1:1 expense, and see the friend balance summed across a shared group and the direct group.
 
-- [ ] **1.28** Category auto-suggest from keywords (swiggy/zomato → Food, uber/ola/rapido → Transport, blinkit/zepto/bigbasket → Groceries, …); editable, suggestion only.
+- [x] **1.28** Category auto-suggest from keywords (swiggy/zomato → Food, uber/ola/rapido → Transport, blinkit/zepto/bigbasket → Groceries, …); editable, suggestion only.
   - Accept: unit tests for the keyword table; e2e: typing "Uber to airport" pre-selects Transport.
 - [ ] **1.29** Adjustment split in the split editor (± per person, then equal).
   - Accept: component test: the remainder and a negative-share error show correctly.

@@ -16,6 +16,7 @@ const base: ExpenseFormState = {
   currency: 'INR',
   date: '2026-09-28',
   category: null,
+  categoryPicked: false,
   payerMode: 'single',
   payerId: A,
   payerAmounts: {},

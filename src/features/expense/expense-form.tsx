@@ -8,7 +8,7 @@ import { CurrencySelect } from '@/components/currency-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { categoryLabel } from '@/lib/categories';
+import { categoryLabel, suggestCategory } from '@/lib/categories';
 import type { EntryDefaults } from '@/lib/contracts/balances';
 import type { EntryDto } from '@/lib/contracts/entries';
 import type { GroupDetail } from '@/lib/contracts/groups';
@@ -198,7 +198,13 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
           placeholder="What was it for?"
           maxLength={120}
           value={state.description}
-          onChange={(e) => update({ description: e.target.value })}
+          onChange={(e) =>
+            update({
+              description: e.target.value,
+              // A suggestion only: once someone picks a category, typing leaves it alone.
+              ...(state.categoryPicked ? {} : { category: suggestCategory(e.target.value) }),
+            })
+          }
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -275,7 +281,7 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
         open={sheet === 'category'}
         onClose={() => setSheet(null)}
         value={state.category}
-        onChange={(category) => update({ category })}
+        onChange={(category) => update({ category, categoryPicked: true })}
       />
 
       <Sheet
