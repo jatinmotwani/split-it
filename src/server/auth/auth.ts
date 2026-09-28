@@ -2,9 +2,11 @@ import 'server-only';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 import { APP_NAME } from '@/config/app';
 import { getDb, type Db } from '@/server/db';
 import { account, session, user, verification } from '@/server/db/schema';
+import { sendEmail, signInCodeEmail } from '@/server/email';
 import { env, isProduction } from '@/server/env';
 
 const DAY = 60 * 60 * 24;
@@ -38,7 +40,18 @@ function buildAuth(db: Db) {
           },
         }
       : {},
-    plugins: [nextCookies()],
+    plugins: [
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 10 * 60,
+        allowedAttempts: 5,
+        storeOTP: 'hashed',
+        async sendVerificationOTP({ email, otp }) {
+          sendEmail(signInCodeEmail(email, otp));
+        },
+      }),
+      nextCookies(),
+    ],
   });
 }
 

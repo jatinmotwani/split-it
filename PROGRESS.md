@@ -36,15 +36,16 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: `pnpm test` is green; lowering coverage in `lib/money` fails the run.
 - [x] **0.4** Playwright (Pixel 7 viewport, Chromium) + `@axe-core/playwright`; `e2e/smoke.spec.ts` opens `/` and runs axe.
   - Accept: `pnpm e2e` is green locally.
-- [~] **0.5** GitHub Actions CI: pnpm cache → typecheck → lint → unit (coverage) → build → e2e (Postgres 17 service). Playwright report uploaded on failure.
+- [x] **0.5** GitHub Actions CI: pnpm cache → typecheck → lint → unit (coverage) → build → e2e (Postgres 17 service). Playwright report uploaded on failure.
   - Accept: CI is green on a PR.
 - [x] **0.6** DB module: Drizzle + `pg` Pool (`attachDatabasePool`), `drizzle.config.ts`, `db:generate` / `db:migrate` scripts, `createTestDb()` on PGlite with migrations applied, shared `Db` type.
   - Accept: an integration test creates a PGlite DB, migrates, writes and reads a row. `pnpm db:migrate` works against the Neon dev branch.
 - [~] **0.7** Better Auth core: config, Drizzle adapter, generated auth tables + migration, `/api/auth/[...all]`, Google provider, `/sign-in` page, `getSession()` helper.
   - Accept: sign in with Google locally; the home page shows your name; sign out works.
   - Status: code done and tested against PGlite. Google sign-in itself needs your OAuth client from 0.0; the button only appears once GOOGLE_CLIENT_ID/SECRET are set.
-- [ ] **0.8** Email code sign-in (`emailOTP` + Resend), printed to the console when `RESEND_API_KEY` is empty. Code entry uses a numeric keypad input.
+- [~] **0.8** Email code sign-in (`emailOTP` + Resend), printed to the console when `RESEND_API_KEY` is empty. Code entry uses a numeric keypad input.
   - Accept: sign in with a console code locally, and with a real email to your own address.
+  - Status: code done; tested end to end against PGlite via the dev outbox. Delivery to a real inbox needs your RESEND_API_KEY from 0.0.
 - [ ] **0.9** Guest sessions (`anonymous` plugin, "Continue as guest" asks for a name) + `onLinkAccount` hook skeleton (a logged no-op until `group_members` exists) + 180-day rolling sessions.
   - Accept: a guest session survives a reload; linking Google afterwards gives one real user, and the anonymous user is deleted.
 - [ ] **0.10** `route()` wrapper: session, Zod parse, `AppError` → problem JSON, Origin check on mutations, request id, `server-only`. First contract + route: `GET /api/v1/me`. Typed `client/api.ts`.

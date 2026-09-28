@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { authClient } from '@/client/auth-client';
+import { EmailCodeForm } from './email-code-form';
 
 export function SignInOptions({ googleEnabled }: { googleEnabled: boolean }) {
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export function SignInOptions({ googleEnabled }: { googleEnabled: boolean }) {
         </button>
       ) : null}
       {error ? <p role="alert">{error}</p> : null}
+      <EmailCodeForm />
     </div>
   );
 }
