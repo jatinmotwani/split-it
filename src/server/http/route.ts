@@ -1,12 +1,14 @@
 import 'server-only';
 import { type z } from 'zod';
 import { getSessionUser, type SessionUser } from '@/server/auth/session';
+import { requireMember, type Membership } from '@/server/services/core/authz';
 import { env } from '@/server/env';
 import { captureException } from '@/server/observability';
-import { AppError, unauthorized, type ErrorBody } from './errors';
+import { isUuid } from '@/lib/ids';
+import { AppError, notFound, unauthorized, type ErrorBody } from './errors';
 import { requestHash, withIdempotency } from './idempotency';
 
-export type AuthMode = 'none' | 'optional' | 'user';
+export type AuthMode = 'none' | 'optional' | 'user' | 'member';
 
 type RouteContextArg = { params: Promise<Record<string, string | string[]>> };
 
@@ -16,7 +18,9 @@ export type HandlerCtx<A extends AuthMode, P, Q, B> = {
   params: P;
   query: Q;
   body: B;
-  user: A extends 'user' ? SessionUser : SessionUser | null;
+  user: A extends 'user' | 'member' ? SessionUser : SessionUser | null;
+  /** The caller's spot and its group (auth: 'member' only; routes live under /groups/[gid]). */
+  membership: A extends 'member' ? Membership : undefined;
 };
 
 type Schema<T> = z.ZodType<T>;
@@ -107,15 +111,28 @@ export function route<
       }
 
       const user = opts.auth === 'none' ? null : await getSessionUser(req.headers);
-      if (opts.auth === 'user' && !user) throw unauthorized();
+      if ((opts.auth === 'user' || opts.auth === 'member') && !user) throw unauthorized();
 
       const url = new URL(req.url);
-      const params = parse(opts.params, context ? await context.params : {}, 'path');
+      const rawParams = context ? await context.params : {};
+      let membership: Membership | undefined;
+      if (opts.auth === 'member') {
+        // Membership first: a non-member gets 404 before anything about the request is validated.
+        const gid = rawParams.gid;
+        if (typeof gid !== 'string' || !isUuid(gid)) throw notFound('Group not found.');
+        membership = await requireMember(user!.id, gid);
+      }
+      const params = parse(opts.params, rawParams, 'path');
       const query = parse(opts.query, Object.fromEntries(url.searchParams), 'query');
       const { raw, value } = opts.body ? await readBody(req) : { raw: '', value: undefined };
       const body = parse(opts.body, value, 'body');
 
-      const ctx = { req, requestId, params, query, body, user } as HandlerCtx<A, P, Q, B>;
+      const ctx = { req, requestId, params, query, body, user, membership } as HandlerCtx<
+        A,
+        P,
+        Q,
+        B
+      >;
       const status = opts.status ?? 200;
       const run = async () => ({ status, body: (await opts.handler(ctx)) as unknown });
 
