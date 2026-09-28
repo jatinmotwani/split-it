@@ -18,6 +18,7 @@ test('signs in with an email code, then signs out', async ({ page, request }) =>
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByText(/^Hi, /)).toBeVisible();
 
+  await page.getByRole('link', { name: 'Account' }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('button', { name: 'Start as a guest' })).toBeVisible();
 });

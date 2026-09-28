@@ -108,7 +108,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 ### UI
 
-- [ ] **1.15** Home v1: my groups (net per currency, sorted by activity), overall owe/owed per currency, empty state, "New group" sheet (name, type, currency). Guests can create (D2).
+- [x] **1.15** Home v1: my groups (net per currency, sorted by activity), overall owe/owed per currency, empty state, "New group" sheet (name, type, currency). Guests can create (D2).
   - Accept: e2e: a new guest creates "Goa trip" and lands in it.
 - [ ] **1.16** Group screen v1: balance rows, suggestion strip, expenses grouped by date, floating "+" button, skeleton loading.
   - Accept: a component test renders a fixture group; axe passes; tap targets ≥ 44 px.
