@@ -1,6 +1,6 @@
 'use client';
 
-import { HandCoins, Plus, Settings, UserPlus } from 'lucide-react';
+import { Activity as ActivityIcon, HandCoins, Plus, Settings, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ReactNode } from 'react';
 import { AppShell } from '@/components/app-shell';
@@ -64,6 +64,13 @@ export function GroupScreen({
               <UserPlus className="size-5 opacity-40" />
             </span>
           )}
+          <Link
+            href={`/g/${gid}/activity`}
+            aria-label="Activity"
+            className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-muted"
+          >
+            <ActivityIcon className="size-5" />
+          </Link>
           <Link
             href={`/g/${gid}/settings`}
             aria-label="Group settings"
