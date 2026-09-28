@@ -93,7 +93,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: the migration applies to PGlite and Neon dev; constraint tests reject a negative amount, a bad currency, and a duplicate active member.
 - [x] **1.8** Authz foundation: `requireMember`, the `route({ auth: 'member' })` path, the **authz sweep test** (globs group routes; an uncovered route fails).
   - Accept: the sweep test runs; a dummy group route without membership returns 404.
-- [ ] **1.9** Groups API: `PUT /groups/:gid` (create with client id → owner member + invite code; update settings), `GET /groups` (my net per currency, sorted by activity), `GET /groups/:gid`.
+- [x] **1.9** Groups API: `PUT /groups/:gid` (create with client id → owner member + invite code; update settings), `GET /groups` (my net per currency, sorted by activity), `GET /groups/:gid`.
   - Accept: integration tests pass; replaying a create returns the same group; a non-member gets 404.
 - [ ] **1.10** Invites: `GET /invites/:code` (public preview), `POST /invites/:code/join` (new member or pick a placeholder), `POST /groups/:gid/invite/rotate`, Postgres rate limits. `onLinkAccount` now moves memberships, including the collision rule.
   - Accept: tests: a rotated code is dead; the rate limit trips; joining twice is idempotent; linking an account moves memberships.

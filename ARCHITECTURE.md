@@ -33,6 +33,7 @@ Assumptions confirmed at the same time:
 | A6 | Offline-ready API from day one: client-generated UUIDv7 ids, PUT upserts, `Idempotency-Key`, `baseVersion`. The Dexie outbox itself ships in Phase 3. |
 | A7 | Currency picker per expense in Phase 1 (balances are already per currency). Conversion and "show in group currency" wait for Phase 3. |
 | A8 | Better Auth owns `user`, `session`, `account`, `verification`; the spec's `users` table **is** Better Auth's `user`. |
+| A9 | (Build) Group creation is `POST /groups` rather than `PUT /groups/:gid`, so every route under `:gid` stays members-only and the authorization sweep enforces it without exceptions. |
 
 ---
 
@@ -224,8 +225,9 @@ Currency exponents come from our own ISO 4217 table (INR 2, USD 2, JPY 0, KWD 3,
 ```
 GET    /api/v1/me
 GET    /api/v1/groups                              my groups + my net per currency
-PUT    /api/v1/groups/:gid                         create (client id) or update settings
+POST   /api/v1/groups                              create (idempotent on the client id)
 GET    /api/v1/groups/:gid                         group + members
+PATCH  /api/v1/groups/:gid                         settings (name, type, currency, simplify)
 GET    /api/v1/groups/:gid/balances                nets, suggestions (active view)
 GET    /api/v1/groups/:gid/explain?a=&b= | ?member= explain pair / explain net
 GET    /api/v1/groups/:gid/entries?before=&limit=  paged by (date, id)
