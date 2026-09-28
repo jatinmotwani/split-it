@@ -48,7 +48,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Status: code done; tested end to end against PGlite via the dev outbox. Delivery to a real inbox needs your RESEND_API_KEY from 0.0.
 - [x] **0.9** Guest sessions (`anonymous` plugin, "Continue as guest" asks for a name) + `onLinkAccount` hook skeleton (a logged no-op until `group_members` exists) + 180-day rolling sessions.
   - Accept: a guest session survives a reload; linking Google afterwards gives one real user, and the anonymous user is deleted.
-- [ ] **0.10** `route()` wrapper: session, Zod parse, `AppError` → problem JSON, Origin check on mutations, request id, `server-only`. First contract + route: `GET /api/v1/me`. Typed `client/api.ts`.
+- [x] **0.10** `route()` wrapper: session, Zod parse, `AppError` → problem JSON, Origin check on mutations, request id, `server-only`. First contract + route: `GET /api/v1/me`. Typed `client/api.ts`.
   - Accept: unit tests cover 400 (bad body), 401 (no session), 403 (bad Origin) and the success shape.
 - [ ] **0.11** UI base: Tailwind v4, shadcn/ui init, lucide, system dark mode + toggle, mobile app shell (top bar, safe areas), `formatMoney` placeholder text.
   - Accept: home renders in light and dark; axe reports no violations; tap targets ≥ 44 px.

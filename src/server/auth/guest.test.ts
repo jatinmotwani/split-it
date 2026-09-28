@@ -4,7 +4,6 @@ import { useTestDb } from '../../../test/db';
 import type { Db } from '../db';
 import { user } from '../db/schema';
 import { readDevOutbox } from '../email';
-import { resetEnvCache } from '../env';
 import { getAuth } from './auth';
 import { getSessionUser } from './session';
 
@@ -18,13 +17,9 @@ describe('guest sessions', () => {
   let db: Db;
   let close: () => Promise<void>;
   beforeAll(async () => {
-    process.env.ENABLE_DEV_OUTBOX = '1';
-    resetEnvCache();
     ({ db, close } = await useTestDb());
   });
   afterAll(async () => {
-    delete process.env.ENABLE_DEV_OUTBOX;
-    resetEnvCache();
     await close();
   });
 

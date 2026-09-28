@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { useTestDb } from '../../../test/db';
 import { readDevOutbox } from '../email';
-import { resetEnvCache } from '../env';
 import { getAuth } from './auth';
 import { getSessionUser } from './session';
 
@@ -15,13 +14,9 @@ function cookieFrom(res: Response): string {
 describe('email code sign-in', () => {
   let close: () => Promise<void>;
   beforeAll(async () => {
-    process.env.ENABLE_DEV_OUTBOX = '1';
-    resetEnvCache();
     ({ close } = await useTestDb());
   });
   afterAll(async () => {
-    delete process.env.ENABLE_DEV_OUTBOX;
-    resetEnvCache();
     await close();
   });
 
