@@ -82,7 +82,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: properties hold (Σ exact, ≥ 0, deterministic); over a fixed set of 3,000 ids each member gets the extra unit within ±3 points of 1/n, including member ids that share a prefix.
 - [x] **1.4** Splits: `equal`, `exact`, `percentage` (bps), `shares` (×100); payer validation (single or multiple).
   - Accept: property Σshares = amount for each type; typed validation errors.
-- [ ] **1.5** Splits: `adjustment`, `itemized` (items + tax/service/tip/discount), `imported_net`; a single `computeShares()` dispatcher.
+- [x] **1.5** Splits: `adjustment`, `itemized` (items + tax/service/tip/discount), `imported_net`; a single `computeShares()` dispatcher.
   - Accept: a GST + service-charge restaurant bill matches a hand-computed result; `lib/money` branch coverage is 100%.
 - [ ] **1.6** Ledger: `nets`, `pairwise`, `simplify`, `suggestions`, `explainPair`, `explainNet`.
   - Accept: fast-check random ledgers give Σnets = 0; applying the plan zeroes everyone; transfers ≤ n−1; Σ explainPair = the pair balance.
