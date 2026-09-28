@@ -2,11 +2,13 @@ import 'server-only';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
+import { anonymous } from 'better-auth/plugins/anonymous';
 import { emailOTP } from 'better-auth/plugins/email-otp';
 import { APP_NAME } from '@/config/app';
 import { getDb, type Db } from '@/server/db';
 import { account, session, user, verification } from '@/server/db/schema';
 import { sendEmail, signInCodeEmail } from '@/server/email';
+import { onGuestLinked } from './link';
 import { env, isProduction } from '@/server/env';
 
 const DAY = 60 * 60 * 24;
@@ -41,6 +43,12 @@ function buildAuth(db: Db) {
         }
       : {},
     plugins: [
+      anonymous({
+        emailDomainName: 'guest.split-it.invalid',
+        async onLinkAccount({ anonymousUser, newUser }) {
+          await onGuestLinked(anonymousUser.user.id, newUser.user.id);
+        },
+      }),
       emailOTP({
         otpLength: 6,
         expiresIn: 10 * 60,
