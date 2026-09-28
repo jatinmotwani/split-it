@@ -145,7 +145,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 - [x] **1.28** Category auto-suggest from keywords (swiggy/zomato → Food, uber/ola/rapido → Transport, blinkit/zepto/bigbasket → Groceries, …); editable, suggestion only.
   - Accept: unit tests for the keyword table; e2e: typing "Uber to airport" pre-selects Transport.
-- [ ] **1.29** Adjustment split in the split editor (± per person, then equal).
+- [x] **1.29** Adjustment split in the split editor (± per person, then equal).
   - Accept: component test: the remainder and a negative-share error show correctly.
 - [ ] **1.30** Comments: API (member-only, length limits, soft delete) + UI on the entry detail page; an activity row.
   - Accept: the authz sweep covers comments; e2e: post and see a comment.

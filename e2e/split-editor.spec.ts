@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoA11yViolations } from './support/a11y';
 import { startAsGuest } from './support/auth';
 import { addPlaceholder, createGroup, typeAmount } from './support/groups';
+import { expectTapTargets } from './support/tap-targets';
 
 test('exact split, category, and two payers', async ({ page }) => {
   await startAsGuest(page, 'Asha');
@@ -43,4 +44,26 @@ test('exact split, category, and two payers', async ({ page }) => {
   await expect(row).toContainText('2 people paid ₹600');
   await expect(row).toContainText('₹100');
   await expect(page.getByText('You’re owed ₹400')).toBeVisible();
+
+  // Adjust: Ravi used ₹100 more of the ₹900 cylinder; the other ₹800 is split equally.
+  await page.getByRole('link', { name: 'Add an expense' }).click();
+  await typeAmount(page, '900');
+  await page.getByLabel('Description').fill('Gas cylinder');
+  await page.getByRole('button', { name: /· \d+ (person|people)$/ }).click();
+  const adjust = page.getByRole('dialog', { name: 'Split' });
+  await adjust.getByRole('button', { name: 'Adjust' }).click();
+  await adjust.getByLabel('Ravi adjustment').fill('100');
+  await expect(
+    adjust.getByText('₹800.00 split equally between 2 people, then adjusted.'),
+  ).toBeVisible();
+  await expect(adjust.getByRole('checkbox', { name: /Ravi/ })).toContainText('₹500.00');
+  await expectNoA11yViolations(page);
+  await expectTapTargets(page);
+  await adjust.getByRole('button', { name: 'Done' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Equal with adjustments · 2 people' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('link', { name: /Gas cylinder/ })).toContainText('₹500');
+  await expect(page.getByText('You’re owed ₹900')).toBeVisible();
 });

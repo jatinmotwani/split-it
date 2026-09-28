@@ -3,6 +3,7 @@ import {
   buildPayers,
   buildSplit,
   checkForm,
+  parseSigned,
   prefill,
   type ExpenseFormState,
 } from './use-expense-form';
@@ -25,6 +26,7 @@ const base: ExpenseFormState = {
   exact: {},
   percent: {},
   shares: {},
+  adjust: {},
 };
 
 describe('split form helpers', () => {
@@ -85,6 +87,25 @@ describe('split form helpers', () => {
     expect(buildSplit({ ...base, splitMode: 'exact', exact: { a: '100+20', r: 'x' } })).toEqual({
       type: 'exact',
       amounts: { a: 12_000 },
+    });
+  });
+
+  it('parses signed adjustments and builds an adjustment split for participants only', () => {
+    expect(parseSigned('-150', 'INR')).toBe(-15_000);
+    expect(parseSigned('−20.5', 'INR')).toBe(-2_050);
+    expect(parseSigned('+200', 'INR')).toBe(20_000);
+    expect(parseSigned('', 'INR')).toBeNull();
+    expect(parseSigned('abc', 'INR')).toBeNull();
+    const s: ExpenseFormState = {
+      ...base,
+      splitMode: 'adjustment',
+      participants: [A, R],
+      adjust: { [A]: '100', [R]: '-0', [N]: '50' },
+    };
+    expect(buildSplit(s)).toEqual({
+      type: 'adjustment',
+      participants: [A, R],
+      adjustments: { [A]: 10_000 },
     });
   });
 

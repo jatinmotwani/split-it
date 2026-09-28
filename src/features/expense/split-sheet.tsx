@@ -7,14 +7,35 @@ import { Sheet } from '@/components/ui/sheet';
 import type { MemberDto } from '@/lib/contracts/groups';
 import { cn } from '@/lib/cn';
 import { formatMoney } from '@/lib/money/currency';
-import { checkForm, prefill, type ExpenseFormState, type SplitMode } from './use-expense-form';
+import {
+  checkForm,
+  parseSigned,
+  prefill,
+  type ExpenseFormState,
+  type SplitMode,
+} from './use-expense-form';
 
 const MODES: { mode: SplitMode; label: string }[] = [
   { mode: 'equal', label: 'Equally' },
   { mode: 'exact', label: 'Exact' },
   { mode: 'percentage', label: '%' },
   { mode: 'shares', label: 'Shares' },
+  { mode: 'adjustment', label: 'Adjust' },
 ];
+
+function Box({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex size-6 shrink-0 items-center justify-center rounded-md border',
+        checked ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
+      )}
+      aria-hidden
+    >
+      {checked ? <CheckIcon className="size-4" /> : null}
+    </span>
+  );
+}
 
 export function splitSummary(state: ExpenseFormState): string {
   const count = (rec: Record<string, string>) =>
@@ -29,6 +50,8 @@ export function splitSummary(state: ExpenseFormState): string {
       return `By percentage · ${people(count(state.percent))}`;
     case 'shares':
       return `By shares · ${people(count(state.shares))}`;
+    case 'adjustment':
+      return `Equal with adjustments · ${people(state.participants.length)}`;
   }
 }
 
@@ -69,11 +92,22 @@ export function SplitSheet({
   const field =
     state.splitMode === 'exact' ? 'exact' : state.splitMode === 'percentage' ? 'percent' : 'shares';
 
+  // Adjustment mode: what's left after the ± amounts is split equally.
+  const adjusted = state.participants.reduce(
+    (sum, id) => sum + (parseSigned(state.adjust[id], state.currency) ?? 0),
+    0,
+  );
+  const rest = amount !== null ? amount - adjusted : null;
+  function setAdjust(id: string, text: string, negative: boolean) {
+    const abs = text.replace(/^[-−+]/, '');
+    update({ adjust: { ...state.adjust, [id]: abs ? `${negative ? '-' : ''}${abs}` : '' } });
+  }
+
   return (
     <Sheet open={open} onClose={onClose} title="Split">
       <div className="grid gap-4">
         <div
-          className="grid grid-cols-4 gap-1 rounded-xl bg-muted p-1"
+          className="grid grid-cols-5 gap-1 rounded-xl bg-muted p-1"
           role="group"
           aria-label="Split method"
         >
@@ -95,7 +129,52 @@ export function SplitSheet({
 
         <ul className="grid gap-1">
           {members.map((m) =>
-            state.splitMode === 'equal' ? (
+            state.splitMode === 'adjustment' ? (
+              <li key={m.id} className="flex min-h-12 items-center gap-2">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={state.participants.includes(m.id)}
+                  onClick={() => toggle(m.id)}
+                  className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg px-2 text-left hover:bg-muted"
+                >
+                  <Box checked={state.participants.includes(m.id)} />
+                  <span className="flex-1 truncate">{label(m)}</span>
+                  <span className="tabular text-sm text-muted-foreground">
+                    {shareOf.has(m.id) ? money(shareOf.get(m.id)!) : ''}
+                  </span>
+                </button>
+                {(() => {
+                  const inSplit = state.participants.includes(m.id);
+                  const text = state.adjust[m.id] ?? '';
+                  const negative = /^[-−]/.test(text);
+                  return (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        disabled={!inSplit}
+                        aria-label={`Make ${m.isMe ? 'your' : `${m.displayName}’s`} adjustment ${negative ? 'positive' : 'negative'}`}
+                        onClick={() => setAdjust(m.id, text, !negative)}
+                      >
+                        {negative ? '−' : '+'}
+                      </Button>
+                      <Input
+                        aria-label={`${label(m)} adjustment`}
+                        inputMode="decimal"
+                        placeholder="0"
+                        disabled={!inSplit}
+                        className="tabular w-24 text-right"
+                        value={text.replace(/^[-−]/, '')}
+                        onChange={(e) =>
+                          setAdjust(m.id, e.target.value, /^[-−]/.test(e.target.value) || negative)
+                        }
+                      />
+                    </>
+                  );
+                })()}
+              </li>
+            ) : state.splitMode === 'equal' ? (
               <li key={m.id}>
                 <button
                   type="button"
@@ -104,17 +183,7 @@ export function SplitSheet({
                   onClick={() => toggle(m.id)}
                   className="flex min-h-12 w-full items-center gap-3 rounded-lg px-2 text-left hover:bg-muted"
                 >
-                  <span
-                    className={cn(
-                      'inline-flex size-6 items-center justify-center rounded-md border',
-                      state.participants.includes(m.id)
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-input',
-                    )}
-                    aria-hidden
-                  >
-                    {state.participants.includes(m.id) ? <CheckIcon className="size-4" /> : null}
-                  </span>
+                  <Box checked={state.participants.includes(m.id)} />
                   <span className="flex-1 truncate">{label(m)}</span>
                   <span className="tabular text-sm text-muted-foreground">
                     {shareOf.has(m.id) ? money(shareOf.get(m.id)!) : ''}
@@ -157,6 +226,12 @@ export function SplitSheet({
           )}
         </ul>
 
+        {state.splitMode === 'adjustment' && rest !== null && rest >= 0 && amount ? (
+          <p className="text-sm text-muted-foreground">
+            {money(rest)} split equally between {state.participants.length}{' '}
+            {state.participants.length === 1 ? 'person' : 'people'}, then adjusted.
+          </p>
+        ) : null}
         <p
           className={cn('text-sm font-medium', check.shares ? 'text-owed' : 'text-warn')}
           aria-live="polite"

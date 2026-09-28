@@ -37,6 +37,7 @@ function Harness({ initial }: { initial: Partial<ExpenseFormState> }) {
     exact: {},
     percent: {},
     shares: {},
+    adjust: {},
     ...initial,
   });
   return (
@@ -71,5 +72,25 @@ describe('SplitSheet', () => {
     expect(screen.getByText('₹200.00 left to split.')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('You'), { target: { value: '800' } });
     expect(screen.getByText('₹100.00 too much in the split.')).toBeTruthy();
+  });
+
+  it('adjustment mode: shows the equal remainder, then catches a negative share', () => {
+    render(<Harness initial={{}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Adjust' }));
+    // Ravi pays ₹200 more: ₹800 is split equally, then Ravi gets +₹200.
+    fireEvent.change(screen.getByLabelText('Ravi adjustment'), { target: { value: '200' } });
+    expect(screen.getByText('₹800.00 split equally between 2 people, then adjusted.')).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: /You/ }).textContent).toContain('₹400.00');
+    expect(screen.getByRole('checkbox', { name: /Ravi/ }).textContent).toContain('₹600.00');
+    expect(screen.getByText('Adds up to ₹1,000.00')).toBeTruthy();
+
+    // You take ₹1,200 off: ₹2,000 split is ₹1,000 each, and yours would be −₹200.
+    fireEvent.change(screen.getByLabelText('You adjustment'), { target: { value: '1200' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Make your adjustment negative' }));
+    expect(screen.getByText('An adjustment takes someone ₹200.00 below zero.')).toBeTruthy();
+
+    // Adjustments over the total are caught before that.
+    fireEvent.click(screen.getByRole('button', { name: 'Make your adjustment positive' }));
+    expect(screen.getByText('Adjustments are ₹400.00 more than the total.')).toBeTruthy();
   });
 });

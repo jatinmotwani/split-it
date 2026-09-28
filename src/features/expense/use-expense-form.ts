@@ -9,7 +9,7 @@ import { evalKeypad } from '@/lib/money/keypad';
 import { computeShares, validatePayers, type Leg, type SplitInput } from '@/lib/money/splits';
 import { todayIso } from '@/features/group/dates';
 
-export type SplitMode = 'equal' | 'exact' | 'percentage' | 'shares';
+export type SplitMode = 'equal' | 'exact' | 'percentage' | 'shares' | 'adjustment';
 
 export type ExpenseFormState = {
   expr: string;
@@ -24,12 +24,14 @@ export type ExpenseFormState = {
   payerId: string;
   payerAmounts: Record<string, string>;
   splitMode: SplitMode;
-  /** Who shares an equal split. */
+  /** Who shares an equal split (also the people in an adjustment split). */
   participants: string[];
   /** Raw text per member for exact (₹), percentage (%) and shares. Empty or zero = not included. */
   exact: Record<string, string>;
   percent: Record<string, string>;
   shares: Record<string, string>;
+  /** Signed text per participant for the adjustment split: "200" or "-150". */
+  adjust: Record<string, string>;
 };
 
 function initialState(
@@ -45,7 +47,12 @@ function initialState(
     const map = (rec: Record<string, number>, f: (n: number) => string) =>
       Object.fromEntries(Object.entries(rec).map(([k, v]) => [k, f(v)]));
     const mode: SplitMode =
-      s.type === 'equal' || s.type === 'percentage' || s.type === 'shares' ? s.type : 'exact';
+      s.type === 'equal' ||
+      s.type === 'percentage' ||
+      s.type === 'shares' ||
+      s.type === 'adjustment'
+        ? s.type
+        : 'exact';
     return {
       expr: txt(entry.amount),
       description: entry.description,
@@ -57,13 +64,18 @@ function initialState(
       payerId: entry.payers[0]?.memberId ?? group.myMemberId,
       payerAmounts: Object.fromEntries(entry.payers.map((p) => [p.memberId, txt(p.amount)])),
       splitMode: mode,
-      participants: s.type === 'equal' ? s.participants : entry.shares.map((l) => l.memberId),
+      participants:
+        s.type === 'equal' || s.type === 'adjustment'
+          ? s.participants
+          : entry.shares.map((l) => l.memberId),
       exact:
         s.type === 'exact'
           ? map(s.amounts, txt)
           : Object.fromEntries(entry.shares.map((l) => [l.memberId, txt(l.amount)])),
       percent: s.type === 'percentage' ? map(s.bps, (b) => String(b / 100)) : {},
       shares: s.type === 'shares' ? map(s.weights, (w) => String(w / 100)) : {},
+      adjust:
+        s.type === 'adjustment' ? map(s.adjustments, (n) => (n < 0 ? `-${txt(-n)}` : txt(n))) : {},
     };
   }
   const payer =
@@ -86,6 +98,7 @@ function initialState(
     exact: {},
     percent: {},
     shares: {},
+    adjust: {},
   };
 }
 
@@ -94,6 +107,14 @@ export function parseTyped(text: string | undefined, currency: string): number |
   if (!text || text.trim() === '') return null;
   const r = evalKeypad(text, currency);
   return r.ok ? r.value : null;
+}
+
+/** Parses a signed amount like "-150" or "+200"; null when empty or invalid. */
+export function parseSigned(text: string | undefined, currency: string): number | null {
+  const t = text?.trim() ?? '';
+  const negative = /^[-−]/.test(t);
+  const value = parseTyped(t.replace(/^[-−+]/, ''), currency);
+  return value === null ? null : negative ? -value : value;
 }
 
 function positiveEntries(rec: Record<string, string>, parse: (t: string) => number | null) {
@@ -132,6 +153,16 @@ export function buildSplit(state: ExpenseFormState): SplitInput {
           ),
         ),
       };
+    case 'adjustment':
+      return {
+        type: 'adjustment',
+        participants: state.participants,
+        adjustments: Object.fromEntries(
+          state.participants
+            .map((id) => [id, parseSigned(state.adjust[id], state.currency)] as const)
+            .filter((x): x is readonly [string, number] => x[1] !== null && x[1] !== 0),
+        ),
+      };
   }
 }
 
@@ -168,6 +199,7 @@ export function prefill(
     return { percent: Object.fromEntries(legs.map((l) => [l.memberId, String(l.amount / 100)])) };
   }
   if (mode === 'shares') return { shares: Object.fromEntries(ids.map((id) => [id, '1'])) };
+  if (mode === 'adjustment') return { adjust: {} };
   return {};
 }
 
@@ -186,6 +218,8 @@ export function checkForm(state: ExpenseFormState, amount: number | null, seed: 
     if (!(e instanceof MoneyError)) throw e;
     const rem = e.details?.remainder;
     const bps = e.details?.remainingBps;
+    const over = e.details?.over;
+    const shortBy = e.details?.shortBy;
     const reason =
       rem !== undefined
         ? rem > 0
@@ -195,7 +229,11 @@ export function checkForm(state: ExpenseFormState, amount: number | null, seed: 
           ? bps > 0
             ? `${bps / 100}% left to assign.`
             : `${-bps / 100}% too much.`
-          : e.message;
+          : over !== undefined
+            ? `Adjustments are ${money(over)} more than the total.`
+            : shortBy !== undefined
+              ? `An adjustment takes someone ${money(shortBy)} below zero.`
+              : e.message;
     return { ok: false, reason, shares: null };
   }
   try {
