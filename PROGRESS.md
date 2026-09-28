@@ -72,8 +72,8 @@ Plan status: **awaiting your approval** (kickoff, 2026-09-28). Phases 2–5 get 
   - Accept: tests for INR, JPY and KWD; `₹1,20,000.50` round-trips; unsafe integers throw.
 - [ ] **1.2** `evalKeypad`: `450+120`, `1200/3`, `×`, `÷`, `−`, precedence, half-up rounding to the minor unit, typed errors.
   - Accept: table tests pass; property: `eval("a+b") = a + b` for random minor amounts.
-- [ ] **1.3** `allocate(total, weights, seed)`: largest remainder, BigInt internally, FNV-1a seeded tie-break.
-  - Accept: properties hold (Σ exact, ≥ 0, deterministic); across 1,000 seeds the extra unit lands on every member.
+- [ ] **1.3** `allocate(total, weights, seed)`: largest remainder, BigInt internally, tie-break by `fmix32(fnv1a(seed:memberId))` (plain FNV-1a is biased; see ARCHITECTURE §6.2).
+  - Accept: properties hold (Σ exact, ≥ 0, deterministic); over a fixed set of 3,000 ids each member gets the extra unit within ±3 points of 1/n, including member ids that share a prefix.
 - [ ] **1.4** Splits: `equal`, `exact`, `percentage` (bps), `shares` (×100); payer validation (single or multiple).
   - Accept: property Σshares = amount for each type; typed validation errors.
 - [ ] **1.5** Splits: `adjustment`, `itemized` (items + tax/service/tip/discount), `imported_net`; a single `computeShares()` dispatcher.

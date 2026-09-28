@@ -166,7 +166,8 @@ type SplitInput =
 
 1. Each member gets `floor(total × wᵢ / Σw)`.
 2. The leftover units go to the members with the largest remainders.
-3. **Ties** (for example every remainder is equal in an equal split) are ordered by `fnv1a(seed + ':' + memberId)`. The seed is the entry id, so the extra paisa moves between people across expenses, and the same input always gives the same output. FNV-1a is used because it's fast, synchronous and identical in the browser and Node. It isn't used for security.
+3. **Ties** (for example every remainder is equal in an equal split) are ordered by `fmix32(fnv1a(seed + ':' + memberId))`: FNV-1a followed by MurmurHash3's 32-bit finalizer. The seed is the entry id, so the extra paisa moves between people across expenses, and the same input always gives the same output. It's fast, synchronous and identical in the browser and Node, and it isn't used for security.
+   - **Why the finalizer:** at kickoff, plain FNV-1a measured as unfair over 30,000 random entry ids. With member ids that differ only in the last character, the first member got the extra unit 50% of the time instead of 33%; with UUID member ids it was still 31.4 / 33.8 / 34.9%. With `fmix32` added, every case came out at 33.3 ± 0.2%.
 
 Split functions are built on `allocate()`:
 
@@ -198,7 +199,7 @@ Currency exponents come from our own ISO 4217 table (INR 2, USD 2, JPY 0, KWD 3,
 ### 6.4 Property tests (fast-check)
 
 - Any split input gives Σshares = amount, all shares ≥ 0, and the same result when repeated.
-- Rotation: over many seeds, the extra unit lands on every member at least once.
+- Fairness: over a fixed set of 3,000 entry ids, each of n members gets the extra unit within ±3 percentage points of 1/n of the time. This covers both member ids that share a prefix and UUID member ids. The ids are fixed so the test is deterministic.
 - Random ledgers give Σnets = 0 per currency; applying `simplify` zeroes all nets; transfers ≤ n−1; Σ`explainPair` equals the pairwise balance.
 - Friend balance (1b) equals the Σ of the per-group active views.
 

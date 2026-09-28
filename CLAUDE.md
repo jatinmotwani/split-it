@@ -37,3 +37,4 @@ Filled in during Phase 0 (0.1–0.15). Expected: `pnpm dev`, `pnpm typecheck`, `
 - Next.js 16 builds with Turbopack: use `@serwist/turbopack`, not the webpack plugin.
 - Neon has no Mumbai region: DB in Singapore, Vercel functions in `sin1`.
 - Resend's sandbox sender only emails the account owner until a domain is verified.
+- Rounding tie-break: use `fmix32(fnv1a(...))`. Plain FNV-1a is measurably unfair when member ids share a prefix (50% vs 33%).
