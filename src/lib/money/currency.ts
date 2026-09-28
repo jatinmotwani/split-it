@@ -9,6 +9,8 @@ export class MoneyError extends Error {
   constructor(
     readonly code: string,
     message: string,
+    /** Numbers the UI can show, e.g. `{ remainder: 2000 }` when an exact split is ₹20 short. */
+    readonly details?: Readonly<Record<string, number>>,
   ) {
     super(message);
     this.name = 'MoneyError';
