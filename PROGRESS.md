@@ -2,7 +2,7 @@
 
 Legend: `[ ]` todo · `[x]` done · `[~]` in progress. Each task is sized for **one ~45-minute session**, ends with **one Conventional Commit**, and has an **Accept** check. After each task, a ≤ 5-line note says what changed and what to verify by hand.
 
-Plan status: **awaiting your approval** (kickoff, 2026-09-28). Phases 2–5 get their own plans later.
+Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5 get their own plans later.
 
 | Phase | Tasks | Rough calendar at 1 task/day |
 |---|---|---|
@@ -17,7 +17,7 @@ Plan status: **awaiting your approval** (kickoff, 2026-09-28). Phases 2–5 get 
 - [x] **K.1** Spec saved as `SPEC.md`.
 - [x] **K.2** Kickoff questions answered: all defaults accepted (ARCHITECTURE §1).
 - [x] **K.3** `ARCHITECTURE.md`, `docs/schema.draft.ts`, `PROGRESS.md`, `CLAUDE.md` written. The schema draft compiles, generates SQL, and applies cleanly to Postgres (PGlite).
-- [ ] **K.4** *(you)* Review and approve this plan.
+- [x] **K.4** *(you)* Review and approve this plan. Approved: "build everything".
 
 ---
 
@@ -28,7 +28,7 @@ Plan status: **awaiting your approval** (kickoff, 2026-09-28). Phases 2–5 get 
 
 - [ ] **0.0** *(you, ~45 min)* Create accounts and paste the keys into Vercel and `.env.local`: Vercel, Neon (project in **Singapore**, `main` + `dev` branches), Google Cloud OAuth client, Resend (sandbox is fine for now), Sentry, PostHog. The step-by-step list goes in `README.md` during 0.1.
   - Accept: `.env.local` has every key in `.env.example`; Neon `dev` branch reachable.
-- [ ] **0.1** Scaffold Next.js 16 (App Router, `src/`, pnpm, Node 24 `.nvmrc`, `engines`). Settings: TS `strict` + `noUncheckedIndexedAccess`. Add `src/config/app.ts` (`APP_NAME = 'Split It'`), a README quickstart, and an `.env.example` skeleton.
+- [x] **0.1** Scaffold Next.js 16 (App Router, `src/`, pnpm, Node 24 `.nvmrc`, `engines`). Settings: TS `strict` + `noUncheckedIndexedAccess`. Add `src/config/app.ts` (`APP_NAME = 'Split It'`), a README quickstart, and an `.env.example` skeleton.
   - Accept: `pnpm dev` shows a placeholder home with APP_NAME; `pnpm typecheck` passes.
 - [ ] **0.2** ESLint flat config (next, typescript-eslint, `react/no-danger`, `no-restricted-imports` layer zones from ARCHITECTURE §3) and Prettier. Scripts `lint`, `format`, `format:check`.
   - Accept: `pnpm lint` passes; a deliberate `features → server` import fails lint.
