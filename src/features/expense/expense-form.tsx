@@ -1,39 +1,29 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Coins, UserRound, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { ApiError } from '@/client/api';
-import { sendMutation } from '@/client/mutations';
-import { qk } from '@/client/query-keys';
 import { AppShell } from '@/components/app-shell';
 import { CurrencySelect } from '@/components/currency-select';
-import { ErrorText } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { categoryLabel } from '@/lib/categories';
 import type { EntryDefaults } from '@/lib/contracts/balances';
-import type { EntryDto, SaveEntryResponse } from '@/lib/contracts/entries';
+import type { EntryDto } from '@/lib/contracts/entries';
 import type { GroupDetail } from '@/lib/contracts/groups';
 import { uuidv7 } from '@/lib/ids';
 import { formatMoney } from '@/lib/money/currency';
 import { cn } from '@/lib/cn';
 import { dayLabel, todayIso } from '@/features/group/dates';
+import { useEntryWrite } from '@/features/group/entry-writes';
 import { nameMap } from '@/features/group/use-group-data';
 import { AmountKeypad, pressKey } from './amount-keypad';
 import { CategoryIcon } from './category-icon';
 import { CategorySheet } from './category-sheet';
 import { PayerSheet } from './payer-sheet';
 import { SplitSheet, splitSummary } from './split-sheet';
-import {
-  buildPayers,
-  buildSplit,
-  checkForm,
-  useExpenseForm,
-  type ExpenseFormState,
-} from './use-expense-form';
+import { buildSplit, checkForm, useExpenseForm, type ExpenseFormState } from './use-expense-form';
 
 export type ExpenseFormProps = {
   group: GroupDetail;
@@ -87,7 +77,6 @@ type SheetName = 'payer' | 'split' | 'date' | 'category' | 'currency' | null;
 
 export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormProps) {
   const router = useRouter();
-  const qc = useQueryClient();
   const { state, update, amount } = useExpenseForm(group, defaults, entry);
   const [entryId] = useState(() => entry?.id ?? uuidv7());
   const [sheet, setSheet] = useState<SheetName>(null);
@@ -96,45 +85,50 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
   const back = entry ? `/g/${group.id}/e/${entry.id}` : `/g/${group.id}`;
   const check = checkForm(state, amount, entryId);
 
-  const save = useMutation({
-    mutationFn: () => {
-      const total = amount!;
-      return sendMutation<SaveEntryResponse>({
+  const write = useEntryWrite(group.id, `entry:${entryId}`);
+  const [submitted, setSubmitted] = useState(false);
+
+  const canSave = check.ok && !submitted;
+  const submit = useCallback(() => {
+    if (!check.ok || submitted) return;
+    const now = new Date().toISOString();
+    const body = {
+      kind: 'expense' as const,
+      description: state.description.trim() || categoryLabel(state.category) || 'Expense',
+      category: state.category,
+      amount: amount!,
+      currency: state.currency,
+      date: state.date,
+      payers: check.payers,
+      split: buildSplit(state),
+      ...(entry ? { baseVersion: entry.version } : {}),
+    };
+    setSubmitted(true);
+    // Optimistic: show it in the group right away; the server's answer replaces it.
+    write.mutate({
+      optimistic: {
+        id: entryId,
+        groupId: group.id,
+        notes: entry?.notes ?? null,
+        settlementMethod: null,
+        ...body,
+        shares: check.shares,
+        version: (entry?.version ?? 0) + 1,
+        createdByMemberId: entry?.createdByMemberId ?? group.myMemberId,
+        updatedByMemberId: entry ? group.myMemberId : null,
+        createdAt: entry?.createdAt ?? now,
+        updatedAt: now,
+        deletedAt: entry?.deletedAt ?? null,
+      },
+      request: {
+        id: uuidv7(),
         method: 'PUT',
         path: `/groups/${group.id}/entries/${entryId}`,
-        body: {
-          kind: 'expense',
-          description: state.description.trim() || categoryLabel(state.category) || 'Expense',
-          category: state.category,
-          amount: total,
-          currency: state.currency,
-          date: state.date,
-          payers: buildPayers(state, total),
-          split: buildSplit(state),
-          ...(entry ? { baseVersion: entry.version } : {}),
-        },
-      });
-    },
-    onSuccess: (res) => {
-      qc.setQueryData(qk.entry(group.id, entryId), res.entry);
-      for (const key of [
-        qk.entries(group.id),
-        qk.balances(group.id),
-        qk.groups,
-        qk.defaults(group.id),
-        qk.activity(group.id),
-        qk.revisions(group.id, entryId),
-      ]) {
-        void qc.invalidateQueries({ queryKey: key });
-      }
-      router.push(back);
-    },
-  });
-
-  const canSave = check.ok && !save.isPending;
-  const submit = useCallback(() => {
-    if (canSave) save.mutate();
-  }, [canSave, save]);
+        body,
+      },
+    });
+    router.push(back);
+  }, [check, submitted, state, amount, entry, entryId, group, write, router, back]);
 
   const onKey = useCallback(
     (k: string) => update({ expr: pressKey(state.expr, k) }),
@@ -249,20 +243,13 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
             {check.reason}
           </p>
         ) : null}
-        {save.error ? (
-          <ErrorText>
-            {save.error instanceof ApiError
-              ? save.error.message
-              : 'Couldn’t save. Check your connection and try again.'}
-          </ErrorText>
-        ) : null}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
         <div className="mx-auto grid max-w-lg gap-2">
           <AmountKeypad onKey={onKey} />
           <Button size="lg" block disabled={!canSave} onClick={submit}>
-            {save.isPending ? 'Saving…' : 'Save'}
+            Save
           </Button>
         </div>
       </div>

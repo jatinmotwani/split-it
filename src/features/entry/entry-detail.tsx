@@ -17,10 +17,12 @@ import { categoryLabel } from '@/lib/categories';
 import type { EntryDto, RevisionDto } from '@/lib/contracts/entries';
 import type { GroupDetail } from '@/lib/contracts/groups';
 import { cn } from '@/lib/cn';
+import { uuidv7 } from '@/lib/ids';
 import { formatMoney } from '@/lib/money/currency';
 import { CategoryIcon } from '@/features/expense/category-icon';
 import { dayLabel } from '@/features/group/dates';
 import { relativeTime } from '@/features/group/relative-time';
+import { useEntryWrite } from '@/features/group/entry-writes';
 import { nameMap } from '@/features/group/use-group-data';
 import { buildHistory } from './history';
 
@@ -73,6 +75,7 @@ export function EntryDetail({
     }
   };
   const restore = useMutation({
+    scope: { id: `entry:${eid}` },
     mutationFn: (version?: number) =>
       sendMutation<EntryDto>({
         method: 'POST',
@@ -83,19 +86,28 @@ export function EntryDetail({
       refresh();
     },
   });
-  const remove = useMutation({
-    mutationFn: () =>
-      sendMutation<EntryDto>({ method: 'DELETE', path: `/groups/${gid}/entries/${eid}` }),
-    onSuccess: (e) => {
-      qc.setQueryData(qk.entry(gid, eid), e);
-      refresh();
-      router.push(`/g/${gid}`);
-      toast({
-        message: `Deleted “${e.description}”`,
-        action: { label: 'Undo', onClick: () => restore.mutate(undefined) },
-      });
-    },
-  });
+  // Delete is optimistic: back to the group at once, with Undo. Same scope as the form, so
+  // Undo waits for the delete to land.
+  const write = useEntryWrite(gid, `entry:${eid}`);
+  const remove = () => {
+    const path = `/groups/${gid}/entries/${eid}`;
+    write.mutate({
+      optimistic: { ...entry, deletedAt: new Date().toISOString() },
+      request: { id: uuidv7(), method: 'DELETE', path },
+    });
+    router.push(`/g/${gid}`);
+    toast({
+      message: `Deleted “${entry.description}”`,
+      action: {
+        label: 'Undo',
+        onClick: () =>
+          write.mutate({
+            optimistic: { ...entry, deletedAt: null },
+            request: { id: uuidv7(), method: 'POST', path: `${path}/restore` },
+          }),
+      },
+    });
+  };
 
   const isSettlement = entry.kind === 'settlement';
   const title = isSettlement
@@ -103,7 +115,7 @@ export function EntryDetail({
     : entry.description;
   const money = (n: number) => formatMoney(n, entry.currency);
   const history = buildHistory(entry, revisions);
-  const error = remove.error ?? restore.error;
+  const error = restore.error;
 
   return (
     <AppShell
@@ -191,8 +203,8 @@ export function EntryDetail({
             </Link>
             <Button
               variant="outline"
-              onClick={() => remove.mutate()}
-              disabled={remove.isPending}
+              onClick={remove}
+              disabled={write.isPending}
               className="text-destructive"
             >
               <Trash2 /> Delete

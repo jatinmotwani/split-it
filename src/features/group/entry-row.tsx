@@ -17,11 +17,14 @@ export function EntryRow({
   gid,
   myId,
   name,
+  pending = false,
 }: {
   entry: EntryDto;
   gid: string;
   myId: string;
   name: (id: string) => string;
+  /** Sent but not yet confirmed by the server. */
+  pending?: boolean;
 }) {
   const money = (n: number) => formatMoney(n, entry.currency, { trimZeros: true });
   const impact = myImpact(entry, myId);
@@ -40,6 +43,7 @@ export function EntryRow({
     <Link
       href={`/g/${gid}/e/${entry.id}`}
       className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted"
+      aria-busy={pending || undefined}
     >
       <span
         className={cn(
@@ -57,6 +61,7 @@ export function EntryRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{title}</span>
         <span className="block truncate text-sm text-muted-foreground">
+          {pending ? 'Saving… · ' : ''}
           {isSettlement ? money(entry.amount) : payerText}
         </span>
       </span>

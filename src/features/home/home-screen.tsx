@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/client/api';
 import { qk } from '@/client/query-keys';
+import { wroteRecently } from '@/client/recent-writes';
 import { AppShell } from '@/components/app-shell';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ export function HomeScreen({
     queryKey: qk.groups,
     queryFn: () => api<GroupsResponse>('/groups'),
     initialData: initial,
+    // A render that raced a write from this tab refetches once.
+    ...(wroteRecently() ? { initialDataUpdatedAt: 0 } : {}),
   });
   const [newOpen, setNewOpen] = useState(!!openNew);
   const owed = data.totals.filter((t) => t.net > 0);

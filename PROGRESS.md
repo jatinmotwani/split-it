@@ -130,8 +130,9 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: e2e: a claim link binds a fresh guest to the spot; the card can be dismissed and never blocks.
 - [x] **1.25** Group settings: rename, type, default currency, rotate invite (owner), remove member (blocked with its balance), leave group.
   - Accept: e2e: removing a member with a balance is blocked and shows how much they owe or are owed.
-- [ ] **1.26** Global "+" remembers the last group; Home totals update after writes; optimistic updates everywhere through `sendMutation()`.
+- [x] **1.26** Global "+" remembers the last group; Home totals update after writes; optimistic updates everywhere through `sendMutation()`.
   - Accept: e2e: from Home, "+" opens the last group's add form; a new expense shows at once, before the server responds.
+  - Status: Expense add/edit and delete/undo are optimistic (pending rows show “Saving…”). Recording a payment waits for the server on purpose, so a suggestion can't be recorded twice. Pages rendered while a write was in flight refetch once.
 - [ ] **1.27** Phase 1a exit: an e2e with 3 users (1 guest), 20 expenses mixing split types, payers and a second currency, balances checked against `lib/money` as the oracle, then settle all. Deploy to production.
   - Accept: CI is green; you use it on a real outing and note the rough edges in this file.
 

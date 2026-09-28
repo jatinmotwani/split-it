@@ -62,6 +62,8 @@ export function SettleScreen({
   const name = nameMap(group);
   const active = group.members.filter((m) => m.active);
   const label = (id: string) => (id === group.myMemberId ? 'You' : name(id));
+  // Stored text is read by everyone, so it uses real names, never "You".
+  const realName = (id: string) => group.members.find((m) => m.id === id)?.displayName ?? 'Someone';
 
   const [draft, setDraft] = useState<Draft | null>(() =>
     editing
@@ -91,7 +93,7 @@ export function SettleScreen({
         path: `/groups/${gid}/entries/${id}`,
         body: {
           kind: 'settlement',
-          description: `${name(d.from)} paid ${name(d.to)}`,
+          description: `${realName(d.from)} paid ${realName(d.to)}`,
           amount,
           currency: d.currency,
           date: d.date,

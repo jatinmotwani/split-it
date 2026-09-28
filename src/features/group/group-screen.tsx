@@ -14,6 +14,7 @@ import { formatMoney } from '@/lib/money/currency';
 import { balanceLabel, toneClass } from '@/features/money/balance';
 import { dayLabel } from './dates';
 import { EntryRow } from './entry-row';
+import { mergeEntries, usePendingEntries } from './entry-writes';
 import { nameMap, useBalances, useEntries, useGroup } from './use-group-data';
 
 export type GroupScreenProps = {
@@ -41,11 +42,14 @@ export function GroupScreen({
 
   const myBalances = balances.members.find((m) => m.memberId === myId)?.balances ?? [];
   const others = balances.members.filter((m) => m.memberId !== myId && m.balances.length > 0);
+  const pending = usePendingEntries(gid);
+  const pendingIds = new Set(pending.map((e) => e.id));
   const byDay = useMemo(() => {
     const days = new Map<string, EntryDto[]>();
-    for (const e of page.entries) days.set(e.date, [...(days.get(e.date) ?? []), e]);
+    for (const e of mergeEntries(page.entries, pending))
+      days.set(e.date, [...(days.get(e.date) ?? []), e]);
     return [...days];
-  }, [page.entries]);
+  }, [page.entries, pending]);
   const [showAllBalances, setShowAllBalances] = useState(false);
   const visibleOthers = showAllBalances ? others : others.slice(0, 5);
 
@@ -178,7 +182,13 @@ export function GroupScreen({
                 <ul className="grid">
                   {list.map((e) => (
                     <li key={e.id}>
-                      <EntryRow entry={e} gid={gid} myId={myId} name={name} />
+                      <EntryRow
+                        entry={e}
+                        gid={gid}
+                        myId={myId}
+                        name={name}
+                        pending={pendingIds.has(e.id)}
+                      />
                     </li>
                   ))}
                 </ul>
