@@ -1,0 +1,46 @@
+import { expect, test } from '@playwright/test';
+import { expectNoA11yViolations } from './support/a11y';
+import { startAsGuest } from './support/auth';
+import { addPlaceholder, createGroup, typeAmount } from './support/groups';
+
+test('exact split, category, and two payers', async ({ page }) => {
+  await startAsGuest(page, 'Asha');
+  await createGroup(page, 'Flat 4B', 'Home');
+  await addPlaceholder(page, 'Ravi');
+
+  // Exact: Asha ₹700, Ravi ₹300 of ₹1,000 that Asha paid.
+  await page.getByRole('link', { name: 'Add an expense' }).click();
+  await typeAmount(page, '1000');
+  await page.getByLabel('Description').fill('Electricity');
+  await page.getByRole('button', { name: /Split equally/ }).click();
+  const split = page.getByRole('dialog', { name: 'Split' });
+  await split.getByRole('button', { name: 'Exact' }).click();
+  await split.getByLabel('Ravi').fill('300');
+  await expect(split.getByText('₹200.00 left to split.')).toBeVisible();
+  await expectNoA11yViolations(page);
+  await split.getByLabel('You').fill('700');
+  await expect(split.getByText('Adds up to ₹1,000.00')).toBeVisible();
+  await split.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Category' }).click();
+  await page.getByRole('radio', { name: 'Bills & utilities' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('link', { name: /Electricity/ })).toContainText('₹300');
+
+  // Two payers: Asha ₹400 + Ravi ₹200 of ₹600, split equally → Asha lent ₹100.
+  await page.getByRole('link', { name: 'Add an expense' }).click();
+  await typeAmount(page, '600');
+  await page.getByLabel('Description').fill('Groceries');
+  await page.getByRole('button', { name: /Paid by you/ }).click();
+  const payers = page.getByRole('dialog', { name: 'Who paid?' });
+  await payers.getByRole('button', { name: 'Several people paid' }).click();
+  await payers.getByLabel('You').fill('400');
+  await expect(payers.getByText('₹200.00 left to assign')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled();
+  await payers.getByLabel('Ravi').fill('200');
+  await payers.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  const row = page.getByRole('link', { name: /Groceries/ });
+  await expect(row).toContainText('2 people paid ₹600');
+  await expect(row).toContainText('₹100');
+  await expect(page.getByText('You’re owed ₹400')).toBeVisible();
+});

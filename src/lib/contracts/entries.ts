@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCategory } from '@/lib/categories';
 import type { SplitInput } from '@/lib/money/splits';
 import { currency, id, isoDate, minor, signedMinor } from './common';
 
@@ -47,7 +48,7 @@ export const SETTLEMENT_METHODS = ['cash', 'upi', 'bank', 'other'] as const;
 export const upsertEntryBody = z.object({
   kind: z.enum(['expense', 'settlement']),
   description: z.string().trim().min(1, 'Add a description.').max(120),
-  category: z.string().trim().max(32).nullable().optional(),
+  category: z.string().refine(isCategory, 'Unknown category.').nullable().optional(),
   amount: minor.refine((n) => n > 0, 'Enter an amount above zero.'),
   currency,
   date: isoDate,

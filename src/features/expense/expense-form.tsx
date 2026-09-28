@@ -12,6 +12,7 @@ import { ErrorText } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
+import { categoryLabel } from '@/lib/categories';
 import type { EntryDefaults } from '@/lib/contracts/balances';
 import type { EntryDto, SaveEntryResponse } from '@/lib/contracts/entries';
 import type { GroupDetail } from '@/lib/contracts/groups';
@@ -21,27 +22,49 @@ import { cn } from '@/lib/cn';
 import { dayLabel, todayIso } from '@/features/group/dates';
 import { nameMap } from '@/features/group/use-group-data';
 import { AmountKeypad, pressKey } from './amount-keypad';
-import { buildPayers, buildSplit, useExpenseForm, type ExpenseFormState } from './use-expense-form';
+import { CategoryIcon } from './category-icon';
+import { CategorySheet } from './category-sheet';
+import { PayerSheet } from './payer-sheet';
+import { SplitSheet, splitSummary } from './split-sheet';
+import {
+  buildPayers,
+  buildSplit,
+  checkForm,
+  useExpenseForm,
+  type ExpenseFormState,
+} from './use-expense-form';
 
 export type ExpenseFormProps = {
   group: GroupDetail;
   defaults: EntryDefaults;
   /** Present when editing. */
   entry?: EntryDto;
-  /** Extra chips/sections (split editor, category, currency) from later features. */
-  renderExtras?: (form: {
+  /** Extra chips from later features (currency picker). */
+  extraChips?: (form: {
     state: ExpenseFormState;
     update: (p: Partial<ExpenseFormState>) => void;
-    amount: number | null;
   }) => ReactNode;
 };
 
-function Chip({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+export function Chip({
+  icon,
+  label,
+  onClick,
+  warn,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  warn?: boolean;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-11 max-w-full items-center gap-2 rounded-full border border-input bg-card px-3 text-sm font-medium hover:bg-muted"
+      className={cn(
+        'inline-flex h-11 max-w-full items-center gap-2 rounded-full border bg-card px-3 text-sm font-medium hover:bg-muted',
+        warn ? 'border-warn text-warn' : 'border-input',
+      )}
     >
       {icon}
       <span className="truncate">{label}</span>
@@ -59,27 +82,18 @@ const KEY_MAP: Record<string, string> = {
   Backspace: 'back',
 };
 
-function errorText(err: unknown, currency: string): string {
-  if (!(err instanceof ApiError)) return 'Couldn’t save. Check your connection and try again.';
-  const d = err.details as { remainder?: number } | undefined;
-  if (d && typeof d.remainder === 'number' && d.remainder !== 0) {
-    const amt = formatMoney(Math.abs(d.remainder), currency);
-    return d.remainder > 0
-      ? `${err.message} ${amt} is still unassigned.`
-      : `${err.message} That’s ${amt} too much.`;
-  }
-  return err.message;
-}
+type SheetName = 'payer' | 'split' | 'date' | 'category' | null;
 
-export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFormProps) {
+export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const { state, update, amount } = useExpenseForm(group, defaults, entry);
   const [entryId] = useState(() => entry?.id ?? uuidv7());
-  const [sheet, setSheet] = useState<'payer' | 'date' | null>(null);
+  const [sheet, setSheet] = useState<SheetName>(null);
   const name = nameMap(group);
   const active = group.members.filter((m) => m.active);
   const back = entry ? `/g/${group.id}/e/${entry.id}` : `/g/${group.id}`;
+  const check = checkForm(state, amount, entryId);
 
   const save = useMutation({
     mutationFn: () => {
@@ -89,7 +103,7 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
         path: `/groups/${group.id}/entries/${entryId}`,
         body: {
           kind: 'expense',
-          description: state.description.trim() || 'Expense',
+          description: state.description.trim() || categoryLabel(state.category) || 'Expense',
           category: state.category,
           amount: total,
           currency: state.currency,
@@ -116,7 +130,7 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
     },
   });
 
-  const canSave = amount !== null && amount > 0 && !save.isPending;
+  const canSave = check.ok && !save.isPending;
   const submit = useCallback(() => {
     if (canSave) save.mutate();
   }, [canSave, save]);
@@ -128,6 +142,7 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (sheet) return;
       const t = e.target as HTMLElement | null;
       if (
         t &&
@@ -147,13 +162,16 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onKey, submit]);
+  }, [onKey, submit, sheet]);
 
   const hasOp = /[+−×÷]/.test(state.expr);
+  const payerCount = Object.values(state.payerAmounts).filter((t) => t && Number(t) !== 0).length;
   const payerLabel =
     state.payerMode === 'multiple'
-      ? `Paid by ${Object.values(state.payerAmounts).filter(Boolean).length} people`
+      ? `Paid by ${payerCount} ${payerCount === 1 ? 'person' : 'people'}`
       : `Paid by ${state.payerId === group.myMemberId ? 'you' : name(state.payerId)}`;
+  const splitBroken = !check.ok && check.shares === null && amount !== null && amount > 0;
+  const payersBroken = !check.ok && check.shares !== null;
 
   return (
     <AppShell
@@ -174,11 +192,9 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
             {state.expr ? state.expr : formatMoney(0, state.currency)}
           </output>
           <p className="tabular min-h-5 text-sm text-muted-foreground">
-            {hasOp && amount !== null
-              ? `= ${formatMoney(amount, state.currency)}`
-              : !hasOp && amount !== null && amount > 0
-                ? formatMoney(amount, state.currency)
-                : ''}
+            {amount !== null && (hasOp || amount > 0)
+              ? `${hasOp ? '= ' : ''}${formatMoney(amount, state.currency)}`
+              : ''}
           </p>
         </div>
 
@@ -200,25 +216,40 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
           <Chip
             icon={<UserRound className="size-4" />}
             label={payerLabel}
+            warn={payersBroken}
             onClick={() => setSheet('payer')}
           />
-          {renderExtras ? null : (
-            <Chip
-              icon={<Users className="size-4" />}
-              label={`Split equally · ${state.participants.length} ${state.participants.length === 1 ? 'person' : 'people'}`}
-              onClick={() => {}}
-            />
-          )}
+          <Chip
+            icon={<Users className="size-4" />}
+            label={splitSummary(state)}
+            warn={splitBroken}
+            onClick={() => setSheet('split')}
+          />
           <Chip
             icon={<CalendarDays className="size-4" />}
             label={dayLabel(state.date)}
             onClick={() => setSheet('date')}
           />
+          <Chip
+            icon={<CategoryIcon category={state.category} className="size-4" />}
+            label={categoryLabel(state.category) ?? 'Category'}
+            onClick={() => setSheet('category')}
+          />
+          {extraChips?.({ state, update })}
         </div>
 
-        {renderExtras?.({ state, update, amount })}
-
-        {save.error ? <ErrorText>{errorText(save.error, state.currency)}</ErrorText> : null}
+        {!check.ok && amount !== null && amount > 0 ? (
+          <p className="text-sm font-medium text-warn" aria-live="polite">
+            {check.reason}
+          </p>
+        ) : null}
+        {save.error ? (
+          <ErrorText>
+            {save.error instanceof ApiError
+              ? save.error.message
+              : 'Couldn’t save. Check your connection and try again.'}
+          </ErrorText>
+        ) : null}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
@@ -230,31 +261,29 @@ export function ExpenseForm({ group, defaults, entry, renderExtras }: ExpenseFor
         </div>
       </div>
 
-      <Sheet open={sheet === 'payer'} onClose={() => setSheet(null)} title="Who paid?">
-        <ul className="grid gap-1" role="radiogroup" aria-label="Who paid">
-          {active.map((m) => (
-            <li key={m.id}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={state.payerMode === 'single' && state.payerId === m.id}
-                onClick={() => {
-                  update({ payerMode: 'single', payerId: m.id });
-                  setSheet(null);
-                }}
-                className={cn(
-                  'flex min-h-12 w-full items-center rounded-lg px-3 text-left',
-                  state.payerMode === 'single' && state.payerId === m.id
-                    ? 'bg-accent font-semibold text-accent-foreground'
-                    : 'hover:bg-muted',
-                )}
-              >
-                {m.isMe ? 'You' : m.displayName}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Sheet>
+      <PayerSheet
+        open={sheet === 'payer'}
+        onClose={() => setSheet(null)}
+        state={state}
+        update={update}
+        amount={amount}
+        members={active}
+      />
+      <SplitSheet
+        open={sheet === 'split'}
+        onClose={() => setSheet(null)}
+        state={state}
+        update={update}
+        amount={amount}
+        members={active}
+        seed={entryId}
+      />
+      <CategorySheet
+        open={sheet === 'category'}
+        onClose={() => setSheet(null)}
+        value={state.category}
+        onChange={(category) => update({ category })}
+      />
 
       <Sheet open={sheet === 'date'} onClose={() => setSheet(null)} title="When?">
         <div className="grid gap-3">

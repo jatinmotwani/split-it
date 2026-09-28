@@ -1,8 +1,9 @@
-import { ArrowRightLeft, ReceiptText } from 'lucide-react';
+import { ArrowRightLeft } from 'lucide-react';
 import Link from 'next/link';
 import type { EntryDto } from '@/lib/contracts/entries';
 import { cn } from '@/lib/cn';
 import { formatMoney } from '@/lib/money/currency';
+import { CategoryIcon } from '@/features/expense/category-icon';
 
 /** How an entry affects me: positive = I lent / got back, negative = I borrowed / paid back. */
 export function myImpact(e: EntryDto, myId: string): number {
@@ -47,7 +48,11 @@ export function EntryRow({
         )}
         aria-hidden
       >
-        {isSettlement ? <ArrowRightLeft className="size-5" /> : <ReceiptText className="size-5" />}
+        {isSettlement ? (
+          <ArrowRightLeft className="size-5" />
+        ) : (
+          <CategoryIcon category={entry.category} className="size-5" />
+        )}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{title}</span>
