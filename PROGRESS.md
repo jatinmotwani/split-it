@@ -124,7 +124,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: e2e: edit → history shows v1 → restore v1 works.
 - [x] **1.22** Settle up: suggestions from the active view → record a settlement (amount, method cash/UPI/bank/other, date); custom settlement; simplify toggle in settings.
   - Accept: e2e: recording every suggestion makes everyone "Settled up".
-- [ ] **1.23** Explain sheet on every balance: raw view (pairwise entries) or simplified view (my net + routing line, D4).
+- [x] **1.23** Explain sheet on every balance: raw view (pairwise entries) or simplified view (my net + routing line, D4).
   - Accept: a component test shows the rows sum to the balance; the routing line appears only in simplified view.
 - [ ] **1.24** Placeholders and claiming: "Ravi — not joined yet · Send claim link" (WhatsApp/copy), `/c/[token]` claim page, "Save your account" card after the first expense (D2).
   - Accept: e2e: a claim link binds a fresh guest to the spot; the card can be dismissed and never blocks.
