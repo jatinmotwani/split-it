@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { GroupDetail } from '@/lib/contracts/groups';
 import type { InvitePreview, JoinResponse } from '@/lib/contracts/invites';
 import { uuidv7 } from '@/lib/ids';
@@ -129,12 +129,15 @@ describe('invites', () => {
   });
 
   it('rate-limits joins per IP', async () => {
+    // Freeze the clock mid-minute so all 11 requests land in one fixed window.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-09-28T10:00:05Z') });
     const ip = '203.0.113.9';
     const statuses: number[] = [];
     for (let i = 0; i < 11; i++) {
       const u = await signInGuest(`Spammer ${i}`);
       statuses.push((await join(group.inviteCode, u, { displayName: `S${i}` }, ip)).status);
     }
+    vi.useRealTimers();
     expect(statuses.slice(0, 10).every((s) => s === 200)).toBe(true);
     expect(statuses[10]).toBe(429);
   });
