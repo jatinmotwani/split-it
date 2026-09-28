@@ -2,6 +2,7 @@ import 'server-only';
 import { type z } from 'zod';
 import { getSessionUser, type SessionUser } from '@/server/auth/session';
 import { env } from '@/server/env';
+import { captureException } from '@/server/observability';
 import { AppError, unauthorized, type ErrorBody } from './errors';
 import { requestHash, withIdempotency } from './idempotency';
 
@@ -141,6 +142,7 @@ export function route<
         `[api] ${req.method} ${new URL(req.url).pathname} failed (request ${requestId})`,
         err,
       );
+      await captureException(err, { requestId });
       const body: ErrorBody = {
         error: { code: 'internal_error', message: 'Something went wrong on our side. Try again.' },
       };
