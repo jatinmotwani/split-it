@@ -89,3 +89,37 @@ export type EntryDto = {
 
 /** PUT response: `conflict` is true when this save replaced someone else's newer edit. */
 export type SaveEntryResponse = { entry: EntryDto; conflict: boolean; unchanged: boolean };
+
+export const listEntriesQuery = z.object({
+  /** Cursor from the previous page: "<date>_<id>". */
+  before: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}_[0-9a-f-]{36}$/)
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+export type EntriesPage = { entries: EntryDto[]; nextCursor: string | null };
+
+export type RevisionDto = {
+  version: number;
+  reason: 'edit' | 'delete' | 'restore' | 'conflict';
+  actorMemberId: string | null;
+  createdAt: string;
+  snapshot: {
+    kind: string;
+    description: string;
+    category: string | null;
+    amount: number;
+    currency: string;
+    date: string;
+    notes: string | null;
+    split: SplitInput;
+    settlementMethod: string | null;
+    deleted: boolean;
+    payers: Leg[];
+    shares: Leg[];
+  };
+};
+
+export const restoreQuery = z.object({ version: z.coerce.number().int().min(1).optional() });

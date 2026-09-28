@@ -101,7 +101,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: tests: a claim token works once; a spot bound to a real account can't be re-claimed; removing a member with a balance → 409 with the amount.
 - [x] **1.12** Entry write: `PUT /entries/:eid` for expenses and settlements. Server recomputes the split, re-checks invariants inside the transaction, versions and `baseVersion` last-write-wins, writes revisions, activity, `last_activity_at`, `Idempotency-Key`.
   - Accept: tests: a broken invariant rolls back; a replay returns an identical response; a stale `baseVersion` is applied and writes a `conflict` revision.
-- [ ] **1.13** Entry reads and lifecycle: `GET` list (paged by date, id), `GET` one, `DELETE` (soft), `POST restore` (undelete or `?version=`), `GET revisions`, `GET activity`.
+- [x] **1.13** Entry reads and lifecycle: `GET` list (paged by date, id), `GET` one, `DELETE` (soft), `POST restore` (undelete or `?version=`), `GET revisions`, `GET activity`.
   - Accept: tests: a delete drops out of balances; restoring version 1 brings back the old amounts as a new version.
 - [ ] **1.14** Balances: `GET /balances` (nets per currency + active-view suggestions), `GET /explain` (pair or member net). Derived "last payer/split/group".
   - Accept: the 3-person fixture matches hand-computed numbers in both views; the explain sums equal the balance.

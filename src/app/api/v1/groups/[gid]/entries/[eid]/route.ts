@@ -3,6 +3,7 @@ import { upsertEntryBody } from '@/lib/contracts/entries';
 import { getDb } from '@/server/db';
 import { route } from '@/server/http/route';
 import { loadEntry, saveEntry } from '@/server/services/core/entries';
+import { deleteEntry } from '@/server/services/core/entry-lifecycle';
 
 const params = z.object({ gid: z.uuid(), eid: z.uuid() });
 
@@ -19,4 +20,11 @@ export const PUT = route({
   body: upsertEntryBody,
   idempotent: true,
   handler: async ({ membership, params, body }) => saveEntry(membership, params.eid, body),
+});
+
+/** Soft delete. Restore with POST …/restore. */
+export const DELETE = route({
+  auth: 'member',
+  params,
+  handler: async ({ membership, params }) => deleteEntry(membership, params.eid),
 });
