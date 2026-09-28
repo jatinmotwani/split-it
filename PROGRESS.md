@@ -74,7 +74,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 ### Money engine (test-first, pure — `src/lib/money`)
 
-- [ ] **1.1** Currency table (ISO 4217 exponents), `assertMinor`, `parseAmount` (`1,20,000.50`), `formatMoney` (`en-IN`, string input, lakh grouping).
+- [x] **1.1** Currency table (ISO 4217 exponents), `assertMinor`, `parseAmount` (`1,20,000.50`), `formatMoney` (`en-IN`, string input, lakh grouping).
   - Accept: tests for INR, JPY and KWD; `₹1,20,000.50` round-trips; unsafe integers throw.
 - [ ] **1.2** `evalKeypad`: `450+120`, `1200/3`, `×`, `÷`, `−`, precedence, half-up rounding to the minor unit, typed errors.
   - Accept: table tests pass; property: `eval("a+b") = a + b` for random minor amounts.
