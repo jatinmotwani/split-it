@@ -89,7 +89,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 ### Schema and API
 
-- [ ] **1.7** Move the Phase 1 tables from `docs/schema.draft.ts` into `src/server/db/schema/*` and generate the migration. Test fixtures: `makeUser`, `makeGroup`, `makeMember`.
+- [x] **1.7** Move the Phase 1 tables from `docs/schema.draft.ts` into `src/server/db/schema/*` and generate the migration. Test fixtures: `makeUser`, `makeGroup`, `makeMember`.
   - Accept: the migration applies to PGlite and Neon dev; constraint tests reject a negative amount, a bad currency, and a duplicate active member.
 - [ ] **1.8** Authz foundation: `requireMember`, the `route({ auth: 'member' })` path, the **authz sweep test** (globs group routes; an uncovered route fails).
   - Accept: the sweep test runs; a dummy group route without membership returns 404.
