@@ -38,7 +38,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: `pnpm e2e` is green locally.
 - [~] **0.5** GitHub Actions CI: pnpm cache → typecheck → lint → unit (coverage) → build → e2e (Postgres 17 service). Playwright report uploaded on failure.
   - Accept: CI is green on a PR.
-- [ ] **0.6** DB module: Drizzle + `pg` Pool (`attachDatabasePool`), `drizzle.config.ts`, `db:generate` / `db:migrate` scripts, `createTestDb()` on PGlite with migrations applied, shared `Db` type.
+- [x] **0.6** DB module: Drizzle + `pg` Pool (`attachDatabasePool`), `drizzle.config.ts`, `db:generate` / `db:migrate` scripts, `createTestDb()` on PGlite with migrations applied, shared `Db` type.
   - Accept: an integration test creates a PGlite DB, migrates, writes and reads a row. `pnpm db:migrate` works against the Neon dev branch.
 - [ ] **0.7** Better Auth core: config, Drizzle adapter, generated auth tables + migration, `/api/auth/[...all]`, Google provider, `/sign-in` page, `getSession()` helper.
   - Accept: sign in with Google locally; the home page shows your name; sign out works.
