@@ -25,6 +25,7 @@ import { cn } from '@/lib/cn';
 import { todayIso } from '@/features/group/dates';
 import { nameMap, useBalances, useGroup } from '@/features/group/use-group-data';
 import { parseTyped } from '@/features/expense/use-expense-form';
+import { SimplifySwitch } from './simplify-switch';
 
 const METHOD_LABEL: Record<(typeof SETTLEMENT_METHODS)[number], string> = {
   cash: 'Cash',
@@ -111,30 +112,6 @@ export function SettleScreen({
     },
   });
 
-  // Local state so the switch flips in the same frame; the server write follows.
-  const [simplify, setSimplify] = useState(group.simplifyDebts);
-  const toggleSimplify = useMutation({
-    mutationFn: (simplifyDebts: boolean) =>
-      sendMutation<GroupDetail>({
-        method: 'PATCH',
-        path: `/groups/${gid}`,
-        body: { simplifyDebts },
-      }),
-    // Flip the switch immediately; put it back if the server says no.
-    onMutate: (simplifyDebts) => {
-      const previous = qc.getQueryData<GroupDetail>(qk.group(gid));
-      if (previous) qc.setQueryData(qk.group(gid), { ...previous, simplifyDebts });
-      return { previous };
-    },
-    onError: (_e, _v, ctx) => {
-      if (ctx?.previous) qc.setQueryData(qk.group(gid), ctx.previous);
-    },
-    onSuccess: (g) => {
-      qc.setQueryData(qk.group(gid), g);
-      void qc.invalidateQueries({ queryKey: qk.balances(gid) });
-    },
-  });
-
   const startFrom = (t: TransferDto) =>
     setDraft({
       from: t.from,
@@ -210,26 +187,7 @@ export function SettleScreen({
               </Button>
             </section>
 
-            <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border bg-card p-3">
-              <span>
-                <span className="block font-medium">Simplify debts</span>
-                <span className="block text-sm text-muted-foreground">
-                  Fewer payments; money may be routed through someone else.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                role="switch"
-                className="size-6 accent-(--primary)"
-                checked={simplify}
-                onChange={(e) => {
-                  setSimplify(e.target.checked);
-                  toggleSimplify.mutate(e.target.checked, {
-                    onError: () => setSimplify(!e.target.checked),
-                  });
-                }}
-              />
-            </label>
+            <SimplifySwitch group={group} />
           </>
         ) : null}
 

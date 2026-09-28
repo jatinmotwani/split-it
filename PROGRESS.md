@@ -128,7 +128,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: a component test shows the rows sum to the balance; the routing line appears only in simplified view.
 - [x] **1.24** Placeholders and claiming: "Ravi — not joined yet · Send claim link" (WhatsApp/copy), `/c/[token]` claim page, "Save your account" card after the first expense (D2).
   - Accept: e2e: a claim link binds a fresh guest to the spot; the card can be dismissed and never blocks.
-- [ ] **1.25** Group settings: rename, type, default currency, rotate invite (owner), remove member (blocked with its balance), leave group.
+- [x] **1.25** Group settings: rename, type, default currency, rotate invite (owner), remove member (blocked with its balance), leave group.
   - Accept: e2e: removing a member with a balance is blocked and shows how much they owe or are owed.
 - [ ] **1.26** Global "+" remembers the last group; Home totals update after writes; optimistic updates everywhere through `sendMutation()`.
   - Accept: e2e: from Home, "+" opens the last group's add form; a new expense shows at once, before the server responds.

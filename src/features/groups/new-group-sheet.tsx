@@ -16,13 +16,7 @@ import { DEFAULT_CURRENCY } from '@/config/app';
 import type { GroupDetail, GroupType } from '@/lib/contracts/groups';
 import { uuidv7 } from '@/lib/ids';
 import { cn } from '@/lib/cn';
-
-const TYPES: { value: GroupType; label: string }[] = [
-  { value: 'trip', label: 'Trip' },
-  { value: 'home', label: 'Home' },
-  { value: 'couple', label: 'Couple' },
-  { value: 'other', label: 'Other' },
-];
+import { GROUP_TYPE_OPTIONS } from './group-types';
 
 export function NewGroupSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
@@ -69,7 +63,7 @@ export function NewGroupSheet({ open, onClose }: { open: boolean; onClose: () =>
         <fieldset className="grid gap-1.5">
           <legend className="mb-1.5 text-sm font-medium text-muted-foreground">Type</legend>
           <div className="grid grid-cols-4 gap-2">
-            {TYPES.map((t) => (
+            {GROUP_TYPE_OPTIONS.map((t) => (
               <button
                 key={t.value}
                 type="button"

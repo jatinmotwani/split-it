@@ -28,13 +28,16 @@ test('recording every suggested payment settles everyone', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Settle up' })).toBeVisible();
   await expectNoA11yViolations(page);
 
+  const records = page.getByRole('button', { name: /^Record .* paying/ });
   for (let i = 0; i < 5; i++) {
-    const record = page.getByRole('button', { name: /^Record .* paying/ }).first();
-    if (!(await record.isVisible())) break;
-    await record.click();
+    const n = await records.count();
+    if (n === 0) break;
+    await records.first().click();
     await page.getByRole('button', { name: 'Cash' }).click();
     await page.getByRole('button', { name: 'Save payment' }).click();
-    await expect(page.getByText(/^Recorded /)).toBeVisible();
+    // Wait for the suggestions to refetch before tapping the next one.
+    await expect(page.getByRole('button', { name: 'Save payment' })).toHaveCount(0);
+    await expect.poll(() => records.count()).toBeLessThan(n);
   }
   await expect(page.getByText('Everyone is settled up')).toBeVisible();
 
