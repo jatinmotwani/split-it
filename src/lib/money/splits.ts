@@ -175,7 +175,9 @@ function itemized(amount: Minor, input: ItemizedSplit, seed: string): Leg[] {
   }
 
   const ids = [...subtotal.keys()].sort();
-  const parts = ids.map((key) => ({ key, weight: subtotal.get(key)! }));
+  // If every item is free (all subtotals zero), share any tax or service charge equally.
+  const allFree = itemsTotal === 0;
+  const parts = ids.map((key) => ({ key, weight: allFree ? 1 : subtotal.get(key)! }));
   const extraShares =
     extrasNet === 0
       ? ids.map(() => 0)

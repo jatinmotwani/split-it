@@ -142,6 +142,26 @@ describe('itemized', () => {
     ]);
   });
 
+  it('shares tax equally when every item is free', () => {
+    const legs = computeShares(
+      300,
+      {
+        type: 'itemized',
+        items: [
+          {
+            id: 'x',
+            name: 'Complimentary',
+            amount: 0,
+            assignees: [A, R, N].map((memberId) => ({ memberId, weight: 1 })),
+          },
+        ],
+        extras: [{ kind: 'service', amount: 300 }],
+      },
+      'e',
+    );
+    expect(legs).toEqual([A, N, R].map((memberId) => ({ memberId, amount: 100 })));
+  });
+
   it('reports what does not add up', () => {
     expect(code(() => computeShares(100, { type: 'itemized', items: [], extras: [] }, 'e'))).toBe(
       'no_items',

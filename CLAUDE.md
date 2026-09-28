@@ -59,6 +59,8 @@ Local e2e in a cloud sandbox: `service postgresql start`, then
 - Playwright `waitForFunction` does not await an async predicate; use `expect.poll(() => page.evaluate(...))`.
 - Serwist precache keys carry a revision query: match cached URLs by pathname.
 - Kill stray servers with `pgrep -f '^next-server'`; `pkill -f next-server` matches (and kills) its own shell.
+- Never run `vitest --root /` (it crawls the whole filesystem and exhausted a 15 GB sandbox). Wrap long local runs in `timeout -k 5 <secs>` so hung workers get killed.
+- `FC_SEED=<n> pnpm test` explores other fast-check inputs; seed 1 found the free-items tax edge case.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

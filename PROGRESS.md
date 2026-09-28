@@ -84,7 +84,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: property Σshares = amount for each type; typed validation errors.
 - [x] **1.5** Splits: `adjustment`, `itemized` (items + tax/service/tip/discount), `imported_net`; a single `computeShares()` dispatcher.
   - Accept: a GST + service-charge restaurant bill matches a hand-computed result; `lib/money` branch coverage is 100%.
-- [ ] **1.6** Ledger: `nets`, `pairwise`, `simplify`, `suggestions`, `explainPair`, `explainNet`.
+- [x] **1.6** Ledger: `nets`, `pairwise`, `simplify`, `suggestions`, `explainPair`, `explainNet`.
   - Accept: fast-check random ledgers give Σnets = 0; applying the plan zeroes everyone; transfers ≤ n−1; Σ explainPair = the pair balance.
 
 ### Schema and API
