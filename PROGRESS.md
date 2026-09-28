@@ -97,7 +97,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: integration tests pass; replaying a create returns the same group; a non-member gets 404.
 - [x] **1.10** Invites: `GET /invites/:code` (public preview), `POST /invites/:code/join` (new member or pick a placeholder), `POST /groups/:gid/invite/rotate`, Postgres rate limits. `onLinkAccount` now moves memberships, including the collision rule.
   - Accept: tests: a rotated code is dead; the rate limit trips; joining twice is idempotent; linking an account moves memberships.
-- [ ] **1.11** Members: add a placeholder, mint a claim link (hashed, single-use, replaces the previous one), `POST /claims/:token`, guest re-claim rule (D3) + activity rows, remove member (owner, zero balance only) / leave.
+- [x] **1.11** Members: add a placeholder, mint a claim link (hashed, single-use, replaces the previous one), `POST /claims/:token`, guest re-claim rule (D3) + activity rows, remove member (owner, zero balance only) / leave.
   - Accept: tests: a claim token works once; a spot bound to a real account can't be re-claimed; removing a member with a balance → 409 with the amount.
 - [ ] **1.12** Entry write: `PUT /entries/:eid` for expenses and settlements. Server recomputes the split, re-checks invariants inside the transaction, versions and `baseVersion` last-write-wins, writes revisions, activity, `last_activity_at`, `Idempotency-Key`.
   - Accept: tests: a broken invariant rolls back; a replay returns an identical response; a stale `baseVersion` is applied and writes a `conflict` revision.
