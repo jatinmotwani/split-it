@@ -114,7 +114,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: a component test renders a fixture group; axe passes; tap targets ≥ 44 px.
 - [x] **1.17** Invite and join UI: share sheet (copy + WhatsApp `wa.me/?text=`), `/j/[code]` join page (group name + members; guest name form; sign in; "I'm <placeholder>").
   - Accept: e2e: a second browser context joins as a guest and appears in the member list.
-- [ ] **1.18** Add expense v1: amount-first keypad with inline math, description, defaults (last payer/split, today), Save. The common case is ≤ 3 taps from app open.
+- [x] **1.18** Add expense v1: amount-first keypad with inline math, description, defaults (last payer/split, today), Save. The common case is ≤ 3 taps from app open.
   - Accept: e2e: Home → "+" → `450+120` → "Dinner" → Save shows ₹570 split 3 ways, in 3 taps.
 - [ ] **1.19** Split editor: participant toggles (equal), exact / percentage / shares with a live remainder; multi-payer with a remainder; date; manual category.
   - Accept: component tests for the remainder states; e2e: an exact split saves the right shares.

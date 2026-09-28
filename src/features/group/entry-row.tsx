@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Receipt } from 'lucide-react';
+import { ArrowRightLeft, ReceiptText } from 'lucide-react';
 import Link from 'next/link';
 import type { EntryDto } from '@/lib/contracts/entries';
 import { cn } from '@/lib/cn';
@@ -47,7 +47,7 @@ export function EntryRow({
         )}
         aria-hidden
       >
-        {isSettlement ? <ArrowRightLeft className="size-5" /> : <Receipt className="size-5" />}
+        {isSettlement ? <ArrowRightLeft className="size-5" /> : <ReceiptText className="size-5" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{title}</span>

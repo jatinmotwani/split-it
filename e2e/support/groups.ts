@@ -17,3 +17,29 @@ export async function createGroup(
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
   return page.url().split('/g/')[1]!;
 }
+
+/** Adds a placeholder person through the invite sheet. */
+export async function addPlaceholder(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Invite people' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Invite people' });
+  await sheet.getByLabel('Add someone who isn’t here yet').fill(name);
+  await sheet.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(sheet.getByText(name, { exact: true })).toBeVisible();
+  await sheet.getByRole('button', { name: 'Close' }).click();
+}
+
+const KEY_LABELS: Record<string, string> = {
+  '+': 'plus',
+  '-': 'minus',
+  '*': 'times',
+  '/': 'divide',
+  '.': 'decimal point',
+};
+
+/** Types an amount expression on the on-screen keypad, e.g. "450+120". */
+export async function typeAmount(page: Page, expr: string) {
+  const pad = page.getByRole('group', { name: 'Amount keypad' });
+  for (const ch of expr) {
+    await pad.getByRole('button', { name: KEY_LABELS[ch] ?? ch, exact: true }).click();
+  }
+}
