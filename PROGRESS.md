@@ -34,7 +34,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: `pnpm lint` passes; a deliberate `features → server` import fails lint.
 - [x] **0.3** Vitest + fast-check + v8 coverage with a **100% branch threshold on `src/lib/money/**`**. One sample property test.
   - Accept: `pnpm test` is green; lowering coverage in `lib/money` fails the run.
-- [ ] **0.4** Playwright (Pixel 7 viewport, Chromium) + `@axe-core/playwright`; `e2e/smoke.spec.ts` opens `/` and runs axe.
+- [x] **0.4** Playwright (Pixel 7 viewport, Chromium) + `@axe-core/playwright`; `e2e/smoke.spec.ts` opens `/` and runs axe.
   - Accept: `pnpm e2e` is green locally.
 - [ ] **0.5** GitHub Actions CI: pnpm cache → typecheck → lint → unit (coverage) → build → e2e (Postgres 17 service). Playwright report uploaded on failure.
   - Accept: CI is green on a PR.
