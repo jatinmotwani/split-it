@@ -4,6 +4,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { anonymous } from 'better-auth/plugins/anonymous';
 import { emailOTP } from 'better-auth/plugins/email-otp';
+import { oAuthProxy } from 'better-auth/plugins/oauth-proxy';
 import { APP_NAME } from '@/config/app';
 import { getDb, type Db } from '@/server/db';
 import { account, session, user, verification } from '@/server/db/schema';
@@ -19,10 +20,16 @@ function buildAuth(db: Db) {
   const secret = e.BETTER_AUTH_SECRET ?? (isProduction() ? undefined : DEV_SECRET);
   if (!secret) throw new Error('BETTER_AUTH_SECRET is required in production.');
   const googleEnabled = !!(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET);
+  // Previews have no fixed URL: Google calls back to production, which forwards to the preview.
+  const productionURL = e.OAUTH_PROXY_PRODUCTION_URL ?? e.BETTER_AUTH_URL;
+  const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]
+    .filter(Boolean)
+    .map((host) => `https://${host}`);
 
   return betterAuth({
     appName: APP_NAME,
-    baseURL: e.BETTER_AUTH_URL ?? e.APP_URL,
+    baseURL: e.BETTER_AUTH_URL ?? e.APP_URL ?? vercelOrigins[0],
+    trustedOrigins: [...vercelOrigins, ...(productionURL ? [productionURL] : [])],
     secret,
     database: drizzleAdapter(db, {
       provider: 'pg',
@@ -39,6 +46,7 @@ function buildAuth(db: Db) {
             clientId: e.GOOGLE_CLIENT_ID!,
             clientSecret: e.GOOGLE_CLIENT_SECRET!,
             prompt: 'select_account',
+            ...(productionURL ? { redirectURI: `${productionURL}/api/auth/callback/google` } : {}),
           },
         }
       : {},
@@ -58,6 +66,7 @@ function buildAuth(db: Db) {
           sendEmail(signInCodeEmail(email, otp));
         },
       }),
+      ...(googleEnabled ? [oAuthProxy({ productionURL })] : []),
       nextCookies(),
     ],
   });

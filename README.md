@@ -44,8 +44,9 @@ About 45 minutes. Put every value in Vercel (Project → Settings → Environmen
    - `https://<your-production-domain>/api/auth/callback/google`
    - Then set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Preview deploys reuse the production callback through Better Auth's OAuth proxy, so they need no extra URIs.
 4. **Better Auth**:
-   - `BETTER_AUTH_SECRET`: run `openssl rand -base64 32`.
-   - `BETTER_AUTH_URL`: the production URL.
+   - `BETTER_AUTH_SECRET`: run `openssl rand -base64 32`. Same value in every environment.
+   - `BETTER_AUTH_URL` and `APP_URL`: the production URL. Set these for **Production only**; previews use their own Vercel URL automatically.
+   - `OAUTH_PROXY_PRODUCTION_URL`: the production URL. Set it for **Preview only**, so Google sign-in on a preview goes through production.
 5. **Resend** (resend.com): create an API key and set `RESEND_API_KEY`.
    - Until you verify a domain, leave `EMAIL_FROM` as `onboarding@resend.dev`. Codes are then only delivered to your own Resend account email.
 6. **Sentry**: create a Next.js project and set `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (same value).

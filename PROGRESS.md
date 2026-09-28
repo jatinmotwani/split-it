@@ -58,8 +58,9 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 - [~] **0.13** Observability: Sentry (server + minimal browser init, `beforeSend` scrubbing) and PostHog `track()` (server, `after()`, per-event Zod allowlist) + `/api/events` beacon endpoint. All of it does nothing without env vars.
   - Accept: a test error from a preview shows in Sentry without PII; `track()` is unit-tested with a fake client.
   - Status: code done and unit-tested (scrubbing, event allowlist, beacon). The browser SDK is a lazy chunk loaded only when NEXT_PUBLIC_SENTRY_DSN is set. Seeing a real error in Sentry needs your DSN from 0.0. Sentry 11 replaced sendDefaultPii with dataCollection; configured to collect no user info, cookies, bodies or query strings.
-- [ ] **0.14** Vercel: project, region `sin1`, env vars, Neon–Vercel integration (branch per preview), build command `pnpm db:migrate && next build`, `oAuthProxy` for previews, `CRON_SECRET`, a daily `cleanup` cron (a stub for now).
+- [~] **0.14** Vercel: project, region `sin1`, env vars, Neon–Vercel integration (branch per preview), build command `pnpm db:migrate && next build`, `oAuthProxy` for previews, `CRON_SECRET`, a daily `cleanup` cron (a stub for now).
   - Accept: a PR preview deploys and Google sign-in works on it; `main` deploys to production.
+  - Status: config done: vercel.json (sin1, migrate-then-build, daily cleanup cron), OAuth proxy for previews, cron secret check, and a real cleanup job instead of a stub. The deploy itself needs your Vercel and Neon projects from 0.0; README lists which env vars go in Production vs Preview.
 - [ ] **0.15** Phase 0 exit: `e2e/auth.spec.ts` (guest → "Hi, <name>"; email code via a dev inbox stub). `CLAUDE.md` commands filled in; `.env.example` complete.
   - Accept: CI is green, including the new e2e; the production URL works on your phone.
 
