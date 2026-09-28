@@ -60,6 +60,7 @@ Local e2e in a cloud sandbox: `service postgresql start`, then
 - Serwist precache keys carry a revision query: match cached URLs by pathname.
 - Kill stray servers with `pgrep -f '^next-server'`; `pkill -f next-server` matches (and kills) its own shell.
 - Never run `vitest --root /` (it crawls the whole filesystem and exhausted a 15 GB sandbox). Wrap long local runs in `timeout -k 5 <secs>` so hung workers get killed.
+- Better Auth rate-limits sign-ins per IP by default (3 per 10 s). Our custom rules in `auth.ts` are abuse-only, because Indian carriers put many users behind one IP (CGNAT).
 - `FC_SEED=<n> pnpm test` explores other fast-check inputs; seed 1 found the free-items tax edge case.
 
 <!-- BEGIN:nextjs-agent-rules -->

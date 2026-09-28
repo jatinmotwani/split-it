@@ -35,6 +35,18 @@ function buildAuth(db: Db) {
       provider: 'pg',
       schema: { user, session, account, verification },
     }),
+    rateLimit: {
+      // Abuse-only limits. Better Auth's default (3 sign-ins per 10 s per IP) would lock out
+      // friends behind one mobile carrier IP (Indian networks use carrier-grade NAT heavily).
+      window: 60,
+      max: 600,
+      customRules: {
+        '/sign-in/anonymous': { window: 60, max: 60 },
+        '/sign-in/email-otp': { window: 60, max: 30 },
+        '/sign-in/social': { window: 60, max: 30 },
+        '/email-otp/send-verification-otp': { window: 60, max: 10 },
+      },
+    },
     session: {
       // ARCHITECTURE §8: 180-day rolling sessions, refreshed at most daily.
       expiresIn: 180 * DAY,
