@@ -13,7 +13,7 @@ import { uuidv7 } from '@/lib/ids';
 import { track } from '@/server/analytics/track';
 import type { SessionUser } from '@/server/auth/session';
 import { getDb } from '@/server/db';
-import { groupMembers, groups, user } from '@/server/db/schema';
+import { entries, groupMembers, groups, user } from '@/server/db/schema';
 import { conflict } from '@/server/http/errors';
 import { recordActivity } from './activity';
 import { requireMember, type Membership } from './authz';
@@ -120,16 +120,30 @@ export async function listMyGroups(userId: string): Promise<GroupsResponse> {
       ),
     )
     .orderBy(desc(groups.lastActivityAt), desc(groups.id));
-  if (mine.length === 0) return { groups: [], totals: [] };
+  if (mine.length === 0) return { groups: [], totals: [], lastUsedGroupId: null };
 
   const groupIds = mine.map((m) => m.group.id);
-  const [counts, nets] = await Promise.all([
+  const [counts, nets, last] = await Promise.all([
     db
       .select({ groupId: groupMembers.groupId, n: count() })
       .from(groupMembers)
       .where(and(inArray(groupMembers.groupId, groupIds), isNull(groupMembers.removedAt)))
       .groupBy(groupMembers.groupId),
     memberNets(mine.map((m) => m.memberId)),
+    db
+      .select({ groupId: entries.groupId })
+      .from(entries)
+      .where(
+        and(
+          inArray(
+            entries.createdByMemberId,
+            mine.map((m) => m.memberId),
+          ),
+          isNull(entries.deletedAt),
+        ),
+      )
+      .orderBy(desc(entries.createdAt))
+      .limit(1),
   ]);
   const countOf = new Map(counts.map((c) => [c.groupId, c.n]));
 
@@ -148,7 +162,8 @@ export async function listMyGroups(userId: string): Promise<GroupsResponse> {
       balances,
     };
   });
-  return { groups: list, totals: balanceList(totals) };
+  const lastUsedGroupId = last[0]?.groupId ?? list[0]?.id ?? null;
+  return { groups: list, totals: balanceList(totals), lastUsedGroupId };
 }
 
 export async function updateGroup(

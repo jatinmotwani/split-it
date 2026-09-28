@@ -54,7 +54,12 @@ export type GroupSummary = {
   balances: Balance[];
 };
 
-export type GroupsResponse = { groups: GroupSummary[]; totals: Balance[] };
+export type GroupsResponse = {
+  groups: GroupSummary[];
+  totals: Balance[];
+  /** Group of my most recent expense: where the global “+” goes. */
+  lastUsedGroupId: string | null;
+};
 
 export type GroupDetail = {
   id: string;
