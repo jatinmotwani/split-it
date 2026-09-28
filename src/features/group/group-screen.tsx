@@ -22,9 +22,17 @@ export type GroupScreenProps = {
   /** Slots filled by later features (invite sheet, explain sheet). */
   inviteAction?: ReactNode;
   onBalanceTap?: (memberId: string) => void;
+  /** Shown above the balances (the guest "Save your account" card). */
+  notice?: ReactNode;
 };
 
-export function GroupScreen({ gid, initial, inviteAction, onBalanceTap }: GroupScreenProps) {
+export function GroupScreen({
+  gid,
+  initial,
+  inviteAction,
+  onBalanceTap,
+  notice,
+}: GroupScreenProps) {
   const { data: group } = useGroup(gid, initial.group);
   const { data: balances } = useBalances(gid, initial.balances);
   const { data: page } = useEntries(gid, initial.entries);
@@ -63,6 +71,7 @@ export function GroupScreen({ gid, initial, inviteAction, onBalanceTap }: GroupS
       }
     >
       <div className="grid gap-5">
+        {notice}
         <Card className="grid gap-3 p-4">
           <div aria-label="Your balance in this group">
             {myBalances.length === 0 ? (

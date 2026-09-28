@@ -3,20 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '@/client/api';
-import { authClient } from '@/client/auth-client';
 import { sendMutation } from '@/client/mutations';
 import { ErrorText } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Label } from '@/components/ui/label';
 import type { InvitePreview, JoinResponse } from '@/lib/contracts/invites';
-
-async function ensureSession(name: string, signedIn: boolean) {
-  if (signedIn) return;
-  const res = await authClient.signIn.anonymous();
-  if (res.error) throw new Error(res.error.message ?? 'Couldn’t start a guest session.');
-  await authClient.updateUser({ name });
-}
+import { startGuestSession } from '@/features/auth/guest-session';
 
 export function JoinForm({
   code,
@@ -41,7 +34,7 @@ export function JoinForm({
     setBusy(true);
     setError(null);
     try {
-      await ensureSession(sessionName, signedInName !== null);
+      if (signedInName === null) await startGuestSession(sessionName);
       const res = await sendMutation<JoinResponse>({
         method: 'POST',
         path: `/invites/${code}/join`,

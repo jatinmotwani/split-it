@@ -110,6 +110,7 @@ async function isActiveMember(groupId: string, userId: string) {
 export async function previewClaim(token: string, me: SessionUser | null): Promise<ClaimPreview> {
   const { member, groupName } = await spotByToken(token);
   return {
+    groupId: member.groupId,
     groupName,
     displayName: member.displayName,
     reclaim: member.userId !== null,

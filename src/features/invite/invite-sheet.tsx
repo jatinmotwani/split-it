@@ -2,18 +2,19 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, MessageCircle, UserPlus } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ApiError } from '@/client/api';
 import { sendMutation } from '@/client/mutations';
 import { qk } from '@/client/query-keys';
 import { ErrorText } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet } from '@/components/ui/sheet';
 import type { GroupDetail, MemberDto } from '@/lib/contracts/groups';
+import { PeopleList } from '@/features/members/people-list';
 import { copyText, inviteMessage, whatsappUrl } from './share';
+import { useOrigin } from './use-origin';
 
 export function InviteButton({ group }: { group: GroupDetail }) {
   const [open, setOpen] = useState(false);
@@ -32,12 +33,6 @@ export function InviteButton({ group }: { group: GroupDetail }) {
   );
 }
 
-function statusText(m: MemberDto) {
-  if (m.isMe) return 'you';
-  if (m.status === 'placeholder') return 'not joined yet';
-  return m.status === 'guest' ? 'joined as guest' : 'joined';
-}
-
 export function InviteSheet({
   group,
   open,
@@ -48,14 +43,9 @@ export function InviteSheet({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const [origin, setOrigin] = useState('');
+  const origin = useOrigin();
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState('');
-  useEffect(() => {
-    // Set after mount: the server doesn't know the origin the user is on.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrigin(window.location.origin);
-  }, []);
   const link = `${origin}/j/${group.inviteCode}`;
 
   const add = useMutation({
@@ -138,23 +128,7 @@ export function InviteSheet({
           ) : null}
         </form>
 
-        <section aria-labelledby="people-heading" className="grid gap-1">
-          <h3 id="people-heading" className="text-sm font-semibold text-muted-foreground">
-            People ({group.members.filter((m) => m.active).length})
-          </h3>
-          <ul className="grid">
-            {group.members
-              .filter((m) => m.active)
-              .map((m) => (
-                <li key={m.id} className="flex min-h-11 items-center justify-between gap-2">
-                  <span className="truncate">{m.displayName}</span>
-                  <Badge variant={m.status === 'placeholder' ? 'warn' : 'muted'}>
-                    {statusText(m)}
-                  </Badge>
-                </li>
-              ))}
-          </ul>
-        </section>
+        <PeopleList group={group} />
       </div>
     </Sheet>
   );

@@ -6,6 +6,7 @@ export const addMemberBody = z.object({ displayName });
 export type ClaimLinkResponse = { token: string; path: string; expiresAt: string };
 
 export type ClaimPreview = {
+  groupId: string;
   groupName: string;
   displayName: string;
   /** The spot belongs to a guest who lost their session (D3). */

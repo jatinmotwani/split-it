@@ -91,6 +91,7 @@ describe('members', () => {
       ),
     );
     expect(preview).toEqual({
+      groupId: g.id,
       groupName: 'Flat 4B',
       displayName: 'Ravi',
       reclaim: false,
