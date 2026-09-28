@@ -28,7 +28,7 @@ export default defineConfig({
       : `pnpm db:migrate && pnpm build && pnpm start --port ${PORT}`,
     url: baseURL,
     timeout: 240_000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !!process.env.E2E_REUSE,
     env: {
       APP_URL: baseURL,
       BETTER_AUTH_URL: baseURL,

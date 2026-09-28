@@ -61,8 +61,9 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 - [~] **0.14** Vercel: project, region `sin1`, env vars, Neon–Vercel integration (branch per preview), build command `pnpm db:migrate && next build`, `oAuthProxy` for previews, `CRON_SECRET`, a daily `cleanup` cron (a stub for now).
   - Accept: a PR preview deploys and Google sign-in works on it; `main` deploys to production.
   - Status: config done: vercel.json (sin1, migrate-then-build, daily cleanup cron), OAuth proxy for previews, cron secret check, and a real cleanup job instead of a stub. The deploy itself needs your Vercel and Neon projects from 0.0; README lists which env vars go in Production vs Preview.
-- [ ] **0.15** Phase 0 exit: `e2e/auth.spec.ts` (guest → "Hi, <name>"; email code via a dev inbox stub). `CLAUDE.md` commands filled in; `.env.example` complete.
+- [x] **0.15** Phase 0 exit: `e2e/auth.spec.ts` (guest → "Hi, <name>"; email code via a dev inbox stub). `CLAUDE.md` commands filled in; `.env.example` complete.
   - Accept: CI is green, including the new e2e; the production URL works on your phone.
+  - Status: done. 8 e2e tests (guest, email code via dev outbox, wrong code, sign-out, manifest, offline page, a11y + tap targets, dark theme). The production-URL-on-your-phone check waits for 0.14's deploy.
 
 ---
 

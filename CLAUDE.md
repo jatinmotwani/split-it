@@ -7,7 +7,18 @@ Status and next task: see `PROGRESS.md`. Never start a phase without an approved
 
 ## Commands
 
-Filled in during Phase 0 (0.1–0.15). Expected: `pnpm dev`, `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test`, `pnpm e2e`, `pnpm db:generate`, `pnpm db:migrate`.
+| Command | Notes |
+|---|---|
+| `pnpm dev` | Dev server on :3000. Service worker is off in dev. |
+| `pnpm typecheck` | `next typegen && tsc --noEmit` (route types must be generated first). |
+| `pnpm lint` / `pnpm format` / `pnpm format:check` | ESLint flat config with layer rules; Prettier (Markdown is not formatted). |
+| `pnpm test` | Vitest with coverage. Integration tests use PGlite; no database needed. 100% gate on `src/lib/money`. |
+| `pnpm e2e` | Builds, migrates and starts on :3200. Needs `E2E_DATABASE_URL`. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_REUSE=1` reuses a running server. |
+| `pnpm db:generate --name <x>` / `pnpm db:migrate` | drizzle-kit; reads `.env.local`. |
+| `node scripts/make-icons.mjs` | Re-render PWA icons from `public/icons/*.svg`. |
+
+Local e2e in a cloud sandbox: `service postgresql start`, then
+`E2E_DATABASE_URL=postgres://postgres:postgres@localhost:5432/splitit_e2e PW_CHROMIUM_PATH=/opt/pw-browsers/chromium pnpm e2e`.
 
 ## Working rules
 
@@ -38,6 +49,16 @@ Filled in during Phase 0 (0.1–0.15). Expected: `pnpm dev`, `pnpm typecheck`, `
 - Neon has no Mumbai region: DB in Singapore, Vercel functions in `sin1`.
 - Resend's sandbox sender only emails the account owner until a domain is verified.
 - Rounding tie-break: use `fmix32(fnv1a(...))`. Plain FNV-1a is measurably unfair when member ids share a prefix (50% vs 33%).
+- TypeScript is pinned to 5.9: typescript-eslint doesn't support 6.1+ or 7 yet. ESLint is pinned to 9 because Next's config pulls in plugins that don't support 10.
+- Vitest 5 needs `vite` installed as a peer. Vite 8 transforms with Oxc (`oxc:` option, not `esbuild:`).
+- pnpm is strict: import only direct dependencies (`@next/env` had to be added explicitly).
+- System fonts only: `next/font/google` would need network at build time, and fonts cost bytes on low-end phones.
+- `server-only` is aliased to an empty module in Vitest; server code is tested directly.
+- Better Auth: `getAuth()` is memoised per database so tests can swap in PGlite (`useTestDb()`).
+- Sentry 11 has no `sendDefaultPii`; use `dataCollection` (configured in `src/instrumentation*.ts`).
+- Playwright `waitForFunction` does not await an async predicate; use `expect.poll(() => page.evaluate(...))`.
+- Serwist precache keys carry a revision query: match cached URLs by pathname.
+- Kill stray servers with `pgrep -f '^next-server'`; `pkill -f next-server` matches (and kills) its own shell.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
