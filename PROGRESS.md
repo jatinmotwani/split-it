@@ -110,7 +110,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
 
 - [x] **1.15** Home v1: my groups (net per currency, sorted by activity), overall owe/owed per currency, empty state, "New group" sheet (name, type, currency). Guests can create (D2).
   - Accept: e2e: a new guest creates "Goa trip" and lands in it.
-- [ ] **1.16** Group screen v1: balance rows, suggestion strip, expenses grouped by date, floating "+" button, skeleton loading.
+- [x] **1.16** Group screen v1: balance rows, suggestion strip, expenses grouped by date, floating "+" button, skeleton loading.
   - Accept: a component test renders a fixture group; axe passes; tap targets ≥ 44 px.
 - [ ] **1.17** Invite and join UI: share sheet (copy + WhatsApp `wa.me/?text=`), `/j/[code]` join page (group name + members; guest name form; sign in; "I'm <placeholder>").
   - Accept: e2e: a second browser context joins as a guest and appears in the member list.

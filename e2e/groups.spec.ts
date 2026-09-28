@@ -10,6 +10,11 @@ test('a new guest creates a group and lands in it', async ({ page }) => {
   await expectNoA11yViolations(page);
 
   await createGroup(page, 'Goa trip');
+  await expect(page.getByText('You’re all settled up')).toBeVisible();
+  await expect(page.getByText('No expenses yet')).toBeVisible();
+  await expectNoA11yViolations(page);
+  await expectTapTargets(page);
+
   await page.goto('/');
   const row = page.getByRole('link', { name: /Goa trip/ });
   await expect(row).toBeVisible();

@@ -27,8 +27,9 @@ describe('balances and explain (the D4 example)', () => {
   beforeAll(async () => {
     ({ db, close } = await useTestDb());
     s = await tripScenario(db);
-    dinnerId = uuidv7();
-    cabId = uuidv7();
+    // Distinct timestamps so the two ids (and rows on the same date) sort deterministically.
+    dinnerId = uuidv7(Date.now());
+    cabId = uuidv7(Date.now() + 1);
     await put(
       s.asha,
       s.groupId,

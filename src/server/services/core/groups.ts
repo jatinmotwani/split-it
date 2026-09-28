@@ -74,17 +74,19 @@ export async function listMembers(groupId: string, myUserId: string): Promise<Me
       role: groupMembers.role,
       userId: groupMembers.userId,
       isAnonymous: user.isAnonymous,
+      removedAt: groupMembers.removedAt,
     })
     .from(groupMembers)
     .leftJoin(user, eq(user.id, groupMembers.userId))
-    .where(and(eq(groupMembers.groupId, groupId), isNull(groupMembers.removedAt)))
+    .where(eq(groupMembers.groupId, groupId))
     .orderBy(asc(groupMembers.createdAt), asc(groupMembers.id));
   return rows.map((r) => ({
     id: r.id,
     displayName: r.displayName,
     role: r.role,
     status: memberStatus(r.userId, r.isAnonymous),
-    isMe: r.userId === myUserId,
+    isMe: r.userId === myUserId && r.removedAt === null,
+    active: r.removedAt === null,
   }));
 }
 

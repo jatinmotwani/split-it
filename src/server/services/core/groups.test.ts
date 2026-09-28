@@ -44,7 +44,14 @@ describe('groups API', () => {
     });
     expect(g.inviteCode).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(g.members).toEqual([
-      { id: g.myMemberId, displayName: 'Asha', role: 'owner', status: 'guest', isMe: true },
+      {
+        id: g.myMemberId,
+        displayName: 'Asha',
+        role: 'owner',
+        status: 'guest',
+        isMe: true,
+        active: true,
+      },
     ]);
   });
 

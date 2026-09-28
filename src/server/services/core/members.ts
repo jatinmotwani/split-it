@@ -51,7 +51,7 @@ export async function addPlaceholder(
       data: { name: displayName },
     });
   });
-  return { id, displayName, role: 'member', status: 'placeholder', isMe: false };
+  return { id, displayName, role: 'member', status: 'placeholder', isMe: false, active: true };
 }
 
 /**
@@ -225,5 +225,6 @@ export async function unlinkMember(
     role: target.role,
     status: 'placeholder',
     isMe: false,
+    active: true,
   };
 }

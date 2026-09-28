@@ -40,6 +40,8 @@ export type MemberDto = {
   role: 'owner' | 'member';
   status: MemberStatus;
   isMe: boolean;
+  /** False for people who left or were removed (still named in old expenses). */
+  active: boolean;
 };
 
 export type GroupSummary = {
