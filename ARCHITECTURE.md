@@ -2,7 +2,7 @@
 
 How `APP_NAME` (working name **Split It**) is put together. `SPEC.md` says *what* to build; this file says *how*. The schema draft lives in [`docs/schema.draft.ts`](docs/schema.draft.ts); the task plan lives in [`PROGRESS.md`](PROGRESS.md).
 
-Status: draft for review (kickoff, 2026-09-28). Nothing here is implemented yet.
+Status: Phases 0 and 1 are built (see `PROGRESS.md`). Account-bound steps (Google, Resend, Sentry, the Vercel and Neon deploy) still need your accounts. Decisions made while building are A9–A15 in §1.
 
 ---
 
@@ -34,6 +34,12 @@ Assumptions confirmed at the same time:
 | A7 | Currency picker per expense in Phase 1 (balances are already per currency). Conversion and "show in group currency" wait for Phase 3. |
 | A8 | Better Auth owns `user`, `session`, `account`, `verification`; the spec's `users` table **is** Better Auth's `user`. |
 | A9 | (Build) Group creation is `POST /groups` rather than `PUT /groups/:gid`, so every route under `:gid` stays members-only and the authorization sweep enforces it without exceptions. |
+| A10 | (Build) Friends: a friend is addressed by our 1:1 group (`/friends/:gid`). 1:1 groups have no invite link and no extra members; the friend gets a claim link. `direct_key` is set once both people have accounts (on create, claim, unlink, leave and account linking); if another 1:1 group already holds the key, it stays empty. Home totals include 1:1 balances. `POST /friends` is idempotent on the client id and matches a co-member by account. |
+| A11 | (Build) Friend balance = `friendBalance()` in `lib/money`: the sum over shared groups of `pairNet()` in each group's active view (D4). A friend is matched across groups by account; a placeholder only exists in its 1:1 group. The friend page links each group's share to that group's "Why?" sheet (`/g/:gid?explain=<member>`). |
+| A12 | (Build) Optimistic writes: entry saves, deletes and undo go through `useEntryWrite()`. The group list shows pending entries as "Saving…" (`useMutationState`), and writes to one entry share a mutation `scope`, so Undo waits for Delete. Recording a payment waits for the server on purpose, so a suggestion can't be recorded twice. `sendMutation()` notes which group was written; a page rendered while that write was in flight refetches once (`client/recent-writes.ts`). |
+| A13 | (Build) Categories are suggested from the description by a whole-word keyword table (`suggestCategory()`, earliest keyword wins). It's only a suggestion: once someone picks a category, typing leaves it alone. |
+| A14 | (Build) A new email-code account is asked its name once ("What should friends call you?"). A guest who saves their account keeps their guest name. |
+| A15 | (Build) The adjustment split is the fifth split method, "Adjust". Each person's ± amount has a sign button, because phone number pads have no minus. Activity rows become sentences on the client with `describeActivity()`; the server stores ids, amounts and names only. |
 
 ---
 
@@ -93,14 +99,15 @@ Enforced with ESLint `no-restricted-imports` zones plus `import 'server-only'` i
     ├── config/app.ts                    # APP_NAME, support email, feature defaults
     ├── app/
     │   ├── layout.tsx  manifest.ts  offline/page.tsx
-    │   ├── (app)/page.tsx               # Home
-    │   ├── (app)/g/[groupId]/page.tsx   # Group
-    │   ├── (app)/g/[groupId]/add/page.tsx
-    │   ├── (app)/g/[groupId]/e/[entryId]/page.tsx   # detail, history, comments
-    │   ├── (app)/g/[groupId]/settings/page.tsx
-    │   ├── (app)/friends/…              # Phase 1b
-    │   ├── j/[inviteCode]/page.tsx      # public join page
-    │   ├── c/[claimToken]/page.tsx      # claim a spot
+    │   ├── page.tsx                     # landing, or Home when signed in
+    │   ├── add/page.tsx                 # global "+": redirects to the last group's add form
+    │   ├── g/[gid]/page.tsx             # group (?explain=<member> opens a "Why?" sheet)
+    │   ├── g/[gid]/{add,settle,settings,activity}/page.tsx
+    │   ├── g/[gid]/e/[eid]/page.tsx     # detail, comments, history (+ edit/)
+    │   ├── friends/[gid]/page.tsx       # a friend, addressed by our 1:1 group
+    │   ├── j/[code]/page.tsx            # public join page
+    │   ├── c/[token]/page.tsx           # claim a spot
+    │   ├── account/page.tsx
     │   ├── sign-in/page.tsx
     │   ├── serwist/[path]/route.ts      # service worker served by createSerwistRoute
     │   └── api/
@@ -111,8 +118,8 @@ Enforced with ESLint `no-restricted-imports` zones plus `import 'server-only'` i
     ├── sw.ts                            # service worker source
     ├── lib/{money,contracts,ids.ts,categories.ts}
     ├── server/{db,auth,http,services/{core,plus},entitlements,analytics,observability}
-    ├── client/{api.ts,query-keys.ts,mutations.ts,outbox/}
-    ├── features/{home,group,add-expense,entry,settle,explain,join,members,friends}/
+    ├── client/{api.ts,query-keys.ts,mutations.ts,recent-writes.ts}   # outbox/ in Phase 3
+    ├── features/{home,groups,group,expense,entry,settle,explain,invite,members,friends,activity,settings,auth,money}/
     └── components/ui/
 ```
 
@@ -236,15 +243,22 @@ PUT    /api/v1/groups/:gid/entries/:eid            create/update expense | settl
 DELETE /api/v1/groups/:gid/entries/:eid            soft delete
 POST   /api/v1/groups/:gid/entries/:eid/restore    undelete, or restore ?version=
 GET    /api/v1/groups/:gid/entries/:eid/revisions
-GET    /api/v1/groups/:gid/activity?before=
-POST   /api/v1/groups/:gid/members                 add placeholder by name
+GET    /api/v1/groups/:gid/entries/:eid/comments   live comments, oldest first
+POST   /api/v1/groups/:gid/entries/:eid/comments   { id, body } (idempotent on id; 1–1000 chars)
+DELETE /api/v1/groups/:gid/entries/:eid/comments/:cid  soft delete (author or owner)
+GET    /api/v1/groups/:gid/defaults                last payer/split/currency (derived, §5)
+GET    /api/v1/groups/:gid/activity?before=&limit=
+POST   /api/v1/groups/:gid/members                 add placeholder by name (not in 1:1 groups)
 POST   /api/v1/groups/:gid/members/:mid/claim-link mint single-use claim link
+POST   /api/v1/groups/:gid/members/:mid/unlink     owner: a wrong claim becomes a placeholder
 DELETE /api/v1/groups/:gid/members/:mid            remove (owner; zero balance only) / leave
 POST   /api/v1/groups/:gid/invite/rotate           owner
-GET    /api/v1/invites/:code                       public preview (rate-limited)
+GET    /api/v1/invites/:code                       public preview (rate-limited; 404 for 1:1)
 POST   /api/v1/invites/:code/join                  { displayName } | { claimMemberId }
+GET    /api/v1/claims/:token                       preview a claim link
 POST   /api/v1/claims/:token                       bind current user to the spot
-…/comments (1b), /friends (1b)
+GET    /api/v1/friends                             friends with cross-group balances + candidates
+POST   /api/v1/friends                             { id, memberId | name, currency } → 1:1 group
 ```
 
 ### 7.3 Saving an entry (PUT `/entries/:eid`)
@@ -308,7 +322,7 @@ guest ──(Google / email OTP)──▶ onLinkAccount({anonymousUser, newUser}
 ## 9. Offline and sync
 
 **Phase 1 (preparation):**
-- Every write goes through `client/mutations.ts → sendMutation({ id, kind, groupId, entityId, payload, baseVersion })`, which sets `Idempotency-Key = id`.
+- Every write goes through `client/mutations.ts → sendMutation({ id, method, path, body })`, which sets `Idempotency-Key = id` and notes which group was written (A12).
 - All created entities (groups, entries) get client-generated UUIDv7 ids.
 - The Serwist service worker precaches the app shell and serves `/offline` when a navigation fails.
 

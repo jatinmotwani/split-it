@@ -2,7 +2,7 @@
 
 Legend: `[ ]` todo · `[x]` done · `[~]` in progress. Each task is sized for **one ~45-minute session**, ends with **one Conventional Commit**, and has an **Accept** check. After each task, a ≤ 5-line note says what changed and what to verify by hand.
 
-Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5 get their own plans later.
+Plan status: **approved 2026-09-28. Phases 0, 1a and 1b are built.** What's left needs your accounts: 0.0, 0.7 (Google), 0.8 (Resend), 0.13 (Sentry), 0.14/1.27/1.34 (deploy). Phases 2–5 get their own plans next.
 
 | Phase | Tasks | Rough calendar at 1 task/day |
 |---|---|---|
@@ -155,5 +155,6 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: e2e: add a friend by name, record ₹300, send a claim link.
 - [x] **1.33** Friends 2: friends list with cross-group balances per currency (Σ of active views, D4) and friend detail (per-group breakdown + explain).
   - Accept: property test: friend balance = Σ per-group active-view pairs.
-- [ ] **1.34** Phase 1 exit e2e (friends flow) + docs pass (`CLAUDE.md` gotchas, `ARCHITECTURE.md` updates).
+- [~] **1.34** Phase 1 exit e2e (friends flow) + docs pass (`CLAUDE.md` gotchas, `ARCHITECTURE.md` updates).
   - Accept: CI is green; deployed.
+  - Status: The exit e2e passes locally, and so does the full suite (27 e2e, 254 unit/integration). The docs pass is done: ARCHITECTURE A10–A15, routes, folders; CLAUDE.md gotchas. Still open: deploying (needs your Vercel and Neon accounts, task 0.14).

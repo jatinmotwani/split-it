@@ -62,6 +62,11 @@ Local e2e in a cloud sandbox: `service postgresql start`, then
 - Never run `vitest --root /` (it crawls the whole filesystem and exhausted a 15 GB sandbox). Wrap long local runs in `timeout -k 5 <secs>` so hung workers get killed.
 - Better Auth rate-limits sign-ins per IP by default (3 per 10 s). Our custom rules in `auth.ts` are abuse-only, because Indian carriers put many users behind one IP (CGNAT).
 - `FC_SEED=<n> pnpm test` explores other fast-check inputs; seed 1 found the free-items tax edge case.
+- `useQuery` ignores new `initialData` once a query is cached, so a server render that raced a write can show stale data. `sendMutation()` notes the group, and the group hooks refetch once (`client/recent-writes.ts`).
+- TanStack mutation callbacks passed to `useMutation()` still fire after the component unmounts; callbacks passed to `mutate()` don't. Use a mutation `scope` to run writes to one entry in order (Delete, then Undo).
+- The form remembers the last payer, split and currency per group. Tests that add several expenses must set each of them every time.
+- Playwright: `{ name: 'Continue' }` also matches "Continue as guest", so use `exact: true`. After "Sign out", wait for the signed-out screen before `goto`.
+- Never store "You" in shared text (descriptions, activity): other people read it. Use display names; the UI swaps in "You".
 
 <!-- BEGIN:nextjs-agent-rules -->
 
