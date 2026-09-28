@@ -118,7 +118,7 @@ Plan status: **approved 2026-09-28; building Phases 0, 1a and 1b.** Phases 2–5
   - Accept: e2e: Home → "+" → `450+120` → "Dinner" → Save shows ₹570 split 3 ways, in 3 taps.
 - [x] **1.19** Split editor: participant toggles (equal), exact / percentage / shares with a live remainder; multi-payer with a remainder; date; manual category.
   - Accept: component tests for the remainder states; e2e: an exact split saves the right shares.
-- [ ] **1.20** Currency per expense (defaults to the group currency); per-currency balance rows everywhere.
+- [x] **1.20** Currency per expense (defaults to the group currency); per-currency balance rows everywhere.
   - Accept: e2e: a USD expense in an INR group shows two balance lines and never merges them.
 - [ ] **1.21** Entry detail: view, edit (same form), delete with an undo toast, restore, history with before/after, restore a version.
   - Accept: e2e: edit → history shows v1 → restore v1 works.

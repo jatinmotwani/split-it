@@ -1,13 +1,14 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, UserRound, Users } from 'lucide-react';
+import { CalendarDays, Coins, UserRound, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ApiError } from '@/client/api';
 import { sendMutation } from '@/client/mutations';
 import { qk } from '@/client/query-keys';
 import { AppShell } from '@/components/app-shell';
+import { CurrencySelect } from '@/components/currency-select';
 import { ErrorText } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,7 +83,7 @@ const KEY_MAP: Record<string, string> = {
   Backspace: 'back',
 };
 
-type SheetName = 'payer' | 'split' | 'date' | 'category' | null;
+type SheetName = 'payer' | 'split' | 'date' | 'category' | 'currency' | null;
 
 export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormProps) {
   const router = useRouter();
@@ -235,6 +236,11 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
             label={categoryLabel(state.category) ?? 'Category'}
             onClick={() => setSheet('category')}
           />
+          <Chip
+            icon={<Coins className="size-4" />}
+            label={state.currency}
+            onClick={() => setSheet('currency')}
+          />
           {extraChips?.({ state, update })}
         </div>
 
@@ -284,6 +290,24 @@ export function ExpenseForm({ group, defaults, entry, extraChips }: ExpenseFormP
         value={state.category}
         onChange={(category) => update({ category })}
       />
+
+      <Sheet
+        open={sheet === 'currency'}
+        onClose={() => setSheet(null)}
+        title="Currency"
+        description={`Balances stay separate per currency. This group uses ${group.defaultCurrency}.`}
+      >
+        <div className="grid gap-3">
+          <CurrencySelect
+            id="expense-currency"
+            value={state.currency}
+            onChange={(currency) => update({ currency })}
+          />
+          <Button size="lg" block onClick={() => setSheet(null)}>
+            Done
+          </Button>
+        </div>
+      </Sheet>
 
       <Sheet open={sheet === 'date'} onClose={() => setSheet(null)} title="When?">
         <div className="grid gap-3">
